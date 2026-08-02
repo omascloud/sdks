@@ -8,13 +8,17 @@
 
 package cloud.omas.sdk.metrics.model;
 
-import cloud.omas.sdk.metrics.model.PutMetricDataRequest;
+import cloud.omas.sdk.metrics.model.DataPoint;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,33 +36,26 @@ import java.util.Set;
 @JsonDeserialize(builder = PutMetricDataOperationRequest.Builder.class)
 public final class PutMetricDataOperationRequest {
 
-
-
     private final String metricName;
-    private final PutMetricDataRequest body;
+    private final List<DataPoint> entries;
 
     private PutMetricDataOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.metricName, "metricName");
-
-
         if (builder.metricName != null && builder.metricName.toString().length() > 255) {
             throw new IllegalArgumentException("metricName is too long");
         }
-
         if (builder.metricName != null && !builder.metricName.toString().matches("^[A-Za-z0-9_.-]+$")) {
             throw new IllegalArgumentException("metricName has an invalid format");
         }
-
-
         this.metricName = builder.metricName;
-
-        Objects.requireNonNull(builder.body, "body");
-
-
-
-
-        this.body = builder.body;
-
+        Objects.requireNonNull(builder.entries, "entries");
+        if (builder.entries != null && builder.entries.size() < 1) {
+            throw new IllegalArgumentException("entries has too few items");
+        }
+        if (builder.entries != null && builder.entries.size() > 1000) {
+            throw new IllegalArgumentException("entries has too many items");
+        }
+        this.entries = builder.entries == null ? null : List.copyOf(builder.entries);
     }
 
     /**
@@ -75,19 +72,19 @@ public final class PutMetricDataOperationRequest {
      *
      * @return the metricName value
      */
-    @JsonProperty("metricName")
+    @JsonIgnore
     public String metricName() {
         return metricName;
     }
 
     /**
-     * The request body.
+     * A list of 1 to 1000 data points to be published.
      *
-     * @return the body value
+     * @return the entries value
      */
-    @JsonProperty("body")
-    public PutMetricDataRequest body() {
-        return body;
+    @JsonProperty("entries")
+    public List<DataPoint> entries() {
+        return entries;
     }
 
     /**
@@ -97,7 +94,7 @@ public final class PutMetricDataOperationRequest {
     public static final class Builder {
 
         private String metricName;
-        private PutMetricDataRequest body;
+        private List<DataPoint> entries;
 
         private Builder() {}
 
@@ -113,13 +110,13 @@ public final class PutMetricDataOperationRequest {
         }
 
         /**
-         * Sets body.
+         * Sets entries.
          *
-         * @param body The request body.
+         * @param entries A list of 1 to 1000 data points to be published.
          * @return this builder
          */
-        public Builder body(PutMetricDataRequest body) {
-            this.body = body;
+        public Builder entries(List<DataPoint> entries) {
+            this.entries = entries;
             return this;
         }
 

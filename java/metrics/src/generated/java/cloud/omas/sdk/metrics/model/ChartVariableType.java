@@ -24,11 +24,8 @@ import java.util.Set;
  * Values for ChartVariableType.
  */
 public enum ChartVariableType {
-
     METRIC("METRIC"),
-
     EXPRESSION("EXPRESSION");
-
 
     private final String value;
 

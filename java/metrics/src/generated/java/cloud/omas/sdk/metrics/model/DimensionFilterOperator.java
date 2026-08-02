@@ -24,11 +24,8 @@ import java.util.Set;
  * Values for DimensionFilterOperator.
  */
 public enum DimensionFilterOperator {
-
     EQUALS("EQUALS"),
-
     NOT_EQUALS("NOT_EQUALS");
-
 
     private final String value;
 

@@ -36,10 +36,6 @@ import java.util.Set;
 @JsonDeserialize(builder = ListMetricsResponse.Builder.class)
 public final class ListMetricsResponse {
 
-
-
-
-
     private final List<Metric> metrics;
     private final String nextToken;
     private final Long totalCount;
@@ -47,30 +43,12 @@ public final class ListMetricsResponse {
 
     private ListMetricsResponse(Builder builder) {
         Objects.requireNonNull(builder.metrics, "metrics");
-
-
-
         this.metrics = builder.metrics == null ? null : List.copyOf(builder.metrics);
-
-
-
-
-
         this.nextToken = builder.nextToken;
-
         Objects.requireNonNull(builder.totalCount, "totalCount");
-
-
-
-
         this.totalCount = builder.totalCount;
-
         Objects.requireNonNull(builder.dimensionFacets, "dimensionFacets");
-
-
-
         this.dimensionFacets = builder.dimensionFacets == null ? null : List.copyOf(builder.dimensionFacets);
-
     }
 
     /**

@@ -31,26 +31,18 @@ import java.util.Set;
 @JsonDeserialize(builder = TimeRangeConfig.Builder.class)
 public final class TimeRangeConfig {
 
-
-
     private final String preset;
     private final Integer resolution;
 
     private TimeRangeConfig(Builder builder) {
         Objects.requireNonNull(builder.preset, "preset");
-
-
         if (builder.preset != null && builder.preset.toString().length() > 20) {
             throw new IllegalArgumentException("preset is too long");
         }
-
         if (builder.preset != null && !builder.preset.toString().matches("^[1-9][0-9]*[smhd]$")) {
             throw new IllegalArgumentException("preset has an invalid format");
         }
-
-
         this.preset = builder.preset;
-
         Objects.requireNonNull(builder.resolution, "resolution");
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("resolution must be at least 1");
@@ -58,12 +50,7 @@ public final class TimeRangeConfig {
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("3600")) > 0) {
             throw new IllegalArgumentException("resolution must be at most 3600");
         }
-
-
-
-
         this.resolution = builder.resolution;
-
     }
 
     /**

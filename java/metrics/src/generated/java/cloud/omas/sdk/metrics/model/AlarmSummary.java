@@ -33,11 +33,6 @@ import java.util.Set;
 @JsonDeserialize(builder = AlarmSummary.Builder.class)
 public final class AlarmSummary {
 
-
-
-
-
-
     private final String name;
     private final AlarmStatus status;
     private final NotificationStatus notificationStatus;
@@ -45,48 +40,22 @@ public final class AlarmSummary {
     private final Long lastStatusUpdate;
 
     private AlarmSummary(Builder builder) {
-
-
         if (builder.name != null && builder.name.toString().length() > 255) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
-
-
-
-
         this.status = builder.status;
-
         Objects.requireNonNull(builder.notificationStatus, "notificationStatus");
-
-
-
-
         this.notificationStatus = builder.notificationStatus;
-
         Objects.requireNonNull(builder.notificationChannelCount, "notificationChannelCount");
         if (builder.notificationChannelCount != null && new BigDecimal(builder.notificationChannelCount.toString()).compareTo(new BigDecimal("0")) < 0) {
             throw new IllegalArgumentException("notificationChannelCount must be at least 0");
         }
-
-
-
-
         this.notificationChannelCount = builder.notificationChannelCount;
-
-
-
-
-
         this.lastStatusUpdate = builder.lastStatusUpdate;
-
     }
 
     /**

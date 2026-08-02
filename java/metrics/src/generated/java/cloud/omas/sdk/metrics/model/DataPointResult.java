@@ -31,24 +31,12 @@ import java.util.Set;
 @JsonDeserialize(builder = DataPointResult.Builder.class)
 public final class DataPointResult {
 
-
-
     private final Long timestamp;
     private final Double value;
 
     private DataPointResult(Builder builder) {
-
-
-
-
         this.timestamp = builder.timestamp;
-
-
-
-
-
         this.value = builder.value;
-
     }
 
     /**

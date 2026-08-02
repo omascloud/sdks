@@ -32,17 +32,11 @@ import java.util.Set;
 @JsonDeserialize(builder = UpdateNotificationChannelRequest.Builder.class)
 public final class UpdateNotificationChannelRequest {
 
-
     private final NotificationChannelConfig config;
 
     private UpdateNotificationChannelRequest(Builder builder) {
         Objects.requireNonNull(builder.config, "config");
-
-
-
-
         this.config = builder.config;
-
     }
 
     /**

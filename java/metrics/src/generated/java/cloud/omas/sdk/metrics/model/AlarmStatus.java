@@ -24,13 +24,9 @@ import java.util.Set;
  * Values for AlarmStatus.
  */
 public enum AlarmStatus {
-
     OK("OK"),
-
     IN_ALARM("IN_ALARM"),
-
     INSUFFICIENT_DATA("INSUFFICIENT_DATA");
-
 
     private final String value;
 

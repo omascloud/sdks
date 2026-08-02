@@ -31,50 +31,30 @@ import java.util.Set;
 @JsonDeserialize(builder = CreateDashboardRequest.Builder.class)
 public final class CreateDashboardRequest {
 
-
-
-
     private final String name;
     private final Boolean autoRefreshEnabled;
     private final Integer refreshIntervalMs;
 
     private CreateDashboardRequest(Builder builder) {
         Objects.requireNonNull(builder.name, "name");
-
         if (builder.name != null && builder.name.toString().length() < 1) {
             throw new IllegalArgumentException("name is too short");
         }
-
-
         if (builder.name != null && builder.name.toString().length() > 128) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+(?: [A-Za-z0-9_-]+)*$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
-
-
-
-
         this.autoRefreshEnabled = builder.autoRefreshEnabled;
-
         if (builder.refreshIntervalMs != null && new BigDecimal(builder.refreshIntervalMs.toString()).compareTo(new BigDecimal("5000")) < 0) {
             throw new IllegalArgumentException("refreshIntervalMs must be at least 5000");
         }
         if (builder.refreshIntervalMs != null && new BigDecimal(builder.refreshIntervalMs.toString()).compareTo(new BigDecimal("300000")) > 0) {
             throw new IllegalArgumentException("refreshIntervalMs must be at most 300000");
         }
-
-
-
-
         this.refreshIntervalMs = builder.refreshIntervalMs;
-
     }
 
     /**

@@ -8,13 +8,13 @@
 
 package cloud.omas.sdk.metrics.model;
 
-import cloud.omas.sdk.metrics.model.VerifyNotificationChannelRequest;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,33 +32,23 @@ import java.util.Set;
 @JsonDeserialize(builder = VerifyNotificationChannelOperationRequest.Builder.class)
 public final class VerifyNotificationChannelOperationRequest {
 
-
-
     private final String channelName;
-    private final VerifyNotificationChannelRequest body;
+    private final String code;
 
     private VerifyNotificationChannelOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.channelName, "channelName");
-
-
         if (builder.channelName != null && builder.channelName.toString().length() > 255) {
             throw new IllegalArgumentException("channelName is too long");
         }
-
         if (builder.channelName != null && !builder.channelName.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("channelName has an invalid format");
         }
-
-
         this.channelName = builder.channelName;
-
-        Objects.requireNonNull(builder.body, "body");
-
-
-
-
-        this.body = builder.body;
-
+        Objects.requireNonNull(builder.code, "code");
+        if (builder.code != null && !builder.code.toString().matches("^[0-9]{6}$")) {
+            throw new IllegalArgumentException("code has an invalid format");
+        }
+        this.code = builder.code;
     }
 
     /**
@@ -75,19 +65,19 @@ public final class VerifyNotificationChannelOperationRequest {
      *
      * @return the channelName value
      */
-    @JsonProperty("channelName")
+    @JsonIgnore
     public String channelName() {
         return channelName;
     }
 
     /**
-     * The request body.
+     * Six-digit verification code.
      *
-     * @return the body value
+     * @return the code value
      */
-    @JsonProperty("body")
-    public VerifyNotificationChannelRequest body() {
-        return body;
+    @JsonProperty("code")
+    public String code() {
+        return code;
     }
 
     /**
@@ -97,7 +87,7 @@ public final class VerifyNotificationChannelOperationRequest {
     public static final class Builder {
 
         private String channelName;
-        private VerifyNotificationChannelRequest body;
+        private String code;
 
         private Builder() {}
 
@@ -113,13 +103,13 @@ public final class VerifyNotificationChannelOperationRequest {
         }
 
         /**
-         * Sets body.
+         * Sets code.
          *
-         * @param body The request body.
+         * @param code Six-digit verification code.
          * @return this builder
          */
-        public Builder body(VerifyNotificationChannelRequest body) {
-            this.body = body;
+        public Builder code(String code) {
+            this.code = code;
             return this;
         }
 

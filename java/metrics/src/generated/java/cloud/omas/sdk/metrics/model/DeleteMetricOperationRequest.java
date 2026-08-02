@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -31,24 +32,17 @@ import java.util.Set;
 @JsonDeserialize(builder = DeleteMetricOperationRequest.Builder.class)
 public final class DeleteMetricOperationRequest {
 
-
     private final String metricName;
 
     private DeleteMetricOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.metricName, "metricName");
-
-
         if (builder.metricName != null && builder.metricName.toString().length() > 255) {
             throw new IllegalArgumentException("metricName is too long");
         }
-
         if (builder.metricName != null && !builder.metricName.toString().matches("^[A-Za-z0-9_.-]+$")) {
             throw new IllegalArgumentException("metricName has an invalid format");
         }
-
-
         this.metricName = builder.metricName;
-
     }
 
     /**
@@ -65,7 +59,7 @@ public final class DeleteMetricOperationRequest {
      *
      * @return the metricName value
      */
-    @JsonProperty("metricName")
+    @JsonIgnore
     public String metricName() {
         return metricName;
     }

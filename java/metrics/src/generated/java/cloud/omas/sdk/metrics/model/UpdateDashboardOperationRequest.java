@@ -8,13 +8,17 @@
 
 package cloud.omas.sdk.metrics.model;
 
-import cloud.omas.sdk.metrics.model.UpdateDashboardRequest;
+import cloud.omas.sdk.metrics.model.ChartConfig;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,33 +36,43 @@ import java.util.Set;
 @JsonDeserialize(builder = UpdateDashboardOperationRequest.Builder.class)
 public final class UpdateDashboardOperationRequest {
 
-
-
     private final String dashboardId;
-    private final UpdateDashboardRequest body;
+    private final String name;
+    private final List<ChartConfig> charts;
+    private final Boolean autoRefreshEnabled;
+    private final Integer refreshIntervalMs;
 
     private UpdateDashboardOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.dashboardId, "dashboardId");
-
-
         if (builder.dashboardId != null && builder.dashboardId.toString().length() > 255) {
             throw new IllegalArgumentException("dashboardId is too long");
         }
-
         if (builder.dashboardId != null && !builder.dashboardId.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("dashboardId has an invalid format");
         }
-
-
         this.dashboardId = builder.dashboardId;
-
-        Objects.requireNonNull(builder.body, "body");
-
-
-
-
-        this.body = builder.body;
-
+        if (builder.name != null && builder.name.toString().length() < 1) {
+            throw new IllegalArgumentException("name is too short");
+        }
+        if (builder.name != null && builder.name.toString().length() > 128) {
+            throw new IllegalArgumentException("name is too long");
+        }
+        if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+(?: [A-Za-z0-9_-]+)*$")) {
+            throw new IllegalArgumentException("name has an invalid format");
+        }
+        this.name = builder.name;
+        if (builder.charts != null && builder.charts.size() > 100) {
+            throw new IllegalArgumentException("charts has too many items");
+        }
+        this.charts = builder.charts == null ? null : List.copyOf(builder.charts);
+        this.autoRefreshEnabled = builder.autoRefreshEnabled;
+        if (builder.refreshIntervalMs != null && new BigDecimal(builder.refreshIntervalMs.toString()).compareTo(new BigDecimal("5000")) < 0) {
+            throw new IllegalArgumentException("refreshIntervalMs must be at least 5000");
+        }
+        if (builder.refreshIntervalMs != null && new BigDecimal(builder.refreshIntervalMs.toString()).compareTo(new BigDecimal("300000")) > 0) {
+            throw new IllegalArgumentException("refreshIntervalMs must be at most 300000");
+        }
+        this.refreshIntervalMs = builder.refreshIntervalMs;
     }
 
     /**
@@ -75,19 +89,49 @@ public final class UpdateDashboardOperationRequest {
      *
      * @return the dashboardId value
      */
-    @JsonProperty("dashboardId")
+    @JsonIgnore
     public String dashboardId() {
         return dashboardId;
     }
 
     /**
-     * The request body.
+     * Display name using words made of letters, numbers, underscores, and hyphens separated by single spaces.
      *
-     * @return the body value
+     * @return the name value
      */
-    @JsonProperty("body")
-    public UpdateDashboardRequest body() {
-        return body;
+    @JsonProperty("name")
+    public String name() {
+        return name;
+    }
+
+    /**
+     * The updated list of chart configurations for the dashboard.
+     *
+     * @return the charts value
+     */
+    @JsonProperty("charts")
+    public List<ChartConfig> charts() {
+        return charts;
+    }
+
+    /**
+     * Flag to enable automatic refreshing.
+     *
+     * @return the autoRefreshEnabled value
+     */
+    @JsonProperty("autoRefreshEnabled")
+    public Boolean autoRefreshEnabled() {
+        return autoRefreshEnabled;
+    }
+
+    /**
+     * Automatic refresh interval in milliseconds (5s to 5min).
+     *
+     * @return the refreshIntervalMs value
+     */
+    @JsonProperty("refreshIntervalMs")
+    public Integer refreshIntervalMs() {
+        return refreshIntervalMs;
     }
 
     /**
@@ -97,7 +141,10 @@ public final class UpdateDashboardOperationRequest {
     public static final class Builder {
 
         private String dashboardId;
-        private UpdateDashboardRequest body;
+        private String name;
+        private List<ChartConfig> charts;
+        private Boolean autoRefreshEnabled;
+        private Integer refreshIntervalMs;
 
         private Builder() {}
 
@@ -113,13 +160,46 @@ public final class UpdateDashboardOperationRequest {
         }
 
         /**
-         * Sets body.
+         * Sets name.
          *
-         * @param body The request body.
+         * @param name Display name using words made of letters, numbers, underscores, and hyphens separated by single spaces.
          * @return this builder
          */
-        public Builder body(UpdateDashboardRequest body) {
-            this.body = body;
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        /**
+         * Sets charts.
+         *
+         * @param charts The updated list of chart configurations for the dashboard.
+         * @return this builder
+         */
+        public Builder charts(List<ChartConfig> charts) {
+            this.charts = charts;
+            return this;
+        }
+
+        /**
+         * Sets autoRefreshEnabled.
+         *
+         * @param autoRefreshEnabled Flag to enable automatic refreshing.
+         * @return this builder
+         */
+        public Builder autoRefreshEnabled(Boolean autoRefreshEnabled) {
+            this.autoRefreshEnabled = autoRefreshEnabled;
+            return this;
+        }
+
+        /**
+         * Sets refreshIntervalMs.
+         *
+         * @param refreshIntervalMs Automatic refresh interval in milliseconds (5s to 5min).
+         * @return this builder
+         */
+        public Builder refreshIntervalMs(Integer refreshIntervalMs) {
+            this.refreshIntervalMs = refreshIntervalMs;
             return this;
         }
 

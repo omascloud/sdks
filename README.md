@@ -14,7 +14,7 @@ Add the metrics artifact to your project:
 <dependency>
     <groupId>cloud.omas.sdk</groupId>
     <artifactId>metrics</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -65,7 +65,7 @@ mvn -f generators/java/pom.xml package
 Then run it without arguments:
 
 ```shell
-java -jar generators/java/target/omas-sdk-java-generator-1.0.0-app.jar
+java -jar generators/java/target/omas-sdk-java-generator-1.1.0-app.jar
 ```
 
 The generator uses the repository conventions directly. It reads `schema/metrics.yaml`, writes to `java/metrics`, and derives the Java packages from the service name.

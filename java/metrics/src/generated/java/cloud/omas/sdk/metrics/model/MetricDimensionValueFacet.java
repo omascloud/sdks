@@ -31,26 +31,14 @@ import java.util.Set;
 @JsonDeserialize(builder = MetricDimensionValueFacet.Builder.class)
 public final class MetricDimensionValueFacet {
 
-
-
     private final String value;
     private final Long count;
 
     private MetricDimensionValueFacet(Builder builder) {
         Objects.requireNonNull(builder.value, "value");
-
-
-
-
         this.value = builder.value;
-
         Objects.requireNonNull(builder.count, "count");
-
-
-
-
         this.count = builder.count;
-
     }
 
     /**

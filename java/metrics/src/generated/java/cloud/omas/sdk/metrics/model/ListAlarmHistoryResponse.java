@@ -35,23 +35,12 @@ import java.util.Set;
 @JsonDeserialize(builder = ListAlarmHistoryResponse.Builder.class)
 public final class ListAlarmHistoryResponse {
 
-
-
     private final List<AlarmHistoryEntry> history;
     private final String nextToken;
 
     private ListAlarmHistoryResponse(Builder builder) {
-
-
-
         this.history = builder.history == null ? null : List.copyOf(builder.history);
-
-
-
-
-
         this.nextToken = builder.nextToken;
-
     }
 
     /**

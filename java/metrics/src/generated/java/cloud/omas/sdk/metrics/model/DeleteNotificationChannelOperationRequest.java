@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -31,24 +32,17 @@ import java.util.Set;
 @JsonDeserialize(builder = DeleteNotificationChannelOperationRequest.Builder.class)
 public final class DeleteNotificationChannelOperationRequest {
 
-
     private final String channelName;
 
     private DeleteNotificationChannelOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.channelName, "channelName");
-
-
         if (builder.channelName != null && builder.channelName.toString().length() > 255) {
             throw new IllegalArgumentException("channelName is too long");
         }
-
         if (builder.channelName != null && !builder.channelName.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("channelName has an invalid format");
         }
-
-
         this.channelName = builder.channelName;
-
     }
 
     /**
@@ -65,7 +59,7 @@ public final class DeleteNotificationChannelOperationRequest {
      *
      * @return the channelName value
      */
-    @JsonProperty("channelName")
+    @JsonIgnore
     public String channelName() {
         return channelName;
     }

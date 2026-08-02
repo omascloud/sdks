@@ -37,11 +37,6 @@ import java.util.Set;
 @JsonDeserialize(builder = DataPoint.Builder.class)
 public final class DataPoint {
 
-
-
-
-
-
     private final Long timestamp;
     private final BigDecimal value;
     private final StatisticSet statisticSet;
@@ -49,51 +44,26 @@ public final class DataPoint {
     private final Integer resolution;
 
     private DataPoint(Builder builder) {
-
-
-
-
         this.timestamp = builder.timestamp;
-
         if (builder.value != null && new BigDecimal(builder.value.toString()).compareTo(new BigDecimal("-2147483647")) < 0) {
             throw new IllegalArgumentException("value must be at least -2147483647");
         }
         if (builder.value != null && new BigDecimal(builder.value.toString()).compareTo(new BigDecimal("2147483647")) > 0) {
             throw new IllegalArgumentException("value must be at most 2147483647");
         }
-
-
-
-
         this.value = builder.value;
-
-
-
-
-
         this.statisticSet = builder.statisticSet;
-
-
-
-
         if (builder.dimensions != null && builder.dimensions.size() > 30) {
             throw new IllegalArgumentException("dimensions has too many items");
         }
-
         this.dimensions = builder.dimensions == null ? null : List.copyOf(builder.dimensions);
-
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("resolution must be at least 1");
         }
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("3600")) > 0) {
             throw new IllegalArgumentException("resolution must be at most 3600");
         }
-
-
-
-
         this.resolution = builder.resolution;
-
     }
 
     /**

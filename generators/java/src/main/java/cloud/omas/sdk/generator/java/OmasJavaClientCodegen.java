@@ -34,6 +34,7 @@ public class OmasJavaClientCodegen extends JavaClientCodegen {
     private final Map<String, Map<String, Object>> apiExceptionDefinitions = new HashMap<>();
     private final Set<String> apiExceptionNames = new HashSet<>();
     private final Map<String, Map<String, String>> requestFieldDescriptions = new HashMap<>();
+    private final Map<String, Set<String>> requestBodyFields = new HashMap<>();
 
     public OmasJavaClientCodegen() {
         super();
@@ -88,11 +89,11 @@ public class OmasJavaClientCodegen extends JavaClientCodegen {
             operation.setTags(List.of(serviceName));
             String requestClass = StringUtils.camelize(operation.getOperationId()) + "OperationRequest";
             operation.addExtension(REQUEST_CLASS, requestClass);
-            openAPI.getComponents().addSchemas(requestClass, requestSchema(operation, requestClass));
+            openAPI.getComponents().addSchemas(requestClass, requestSchema(openAPI, operation, requestClass));
         }));
     }
 
-    private Schema<?> requestSchema(Operation operation, String requestClass) {
+    private Schema<?> requestSchema(OpenAPI openAPI, Operation operation, String requestClass) {
         ObjectSchema request = new ObjectSchema();
         request.setAdditionalProperties(false);
         request.setDescription(operation.getSummary() == null
@@ -100,12 +101,15 @@ public class OmasJavaClientCodegen extends JavaClientCodegen {
                 : "Parameters for " + operation.getSummary() + ".");
         List<String> required = new ArrayList<>();
         Map<String, String> descriptions = new LinkedHashMap<>();
+        Set<String> parameterNames = new HashSet<>();
+        Set<String> bodyFields = new HashSet<>();
         if (operation.getParameters() != null) {
             for (Parameter parameter : operation.getParameters()) {
                 if ("cookie".equals(parameter.getIn())) {
                     throw new IllegalArgumentException(
                             "Cookie parameters are not supported: " + operation.getOperationId());
                 }
+                parameterNames.add(parameter.getName());
                 request.addProperty(parameter.getName(), parameter.getSchema());
                 if (parameter.getDescription() != null) {
                     descriptions.put(parameter.getName(), parameter.getDescription());
@@ -121,10 +125,28 @@ public class OmasJavaClientCodegen extends JavaClientCodegen {
                 throw new IllegalArgumentException(
                         "Only application/json request bodies are supported: " + operation.getOperationId());
             }
-            request.addProperty("body", body.getContent().get("application/json").getSchema());
-            descriptions.put("body", body.getDescription() == null ? "The request body." : body.getDescription());
-            if (Boolean.TRUE.equals(body.getRequired())) {
-                required.add("body");
+            Schema<?> bodySchema = resolveSchema(
+                    openAPI,
+                    body.getContent().get("application/json").getSchema(),
+                    operation.getOperationId());
+            if (!(bodySchema instanceof ObjectSchema) && !"object".equals(bodySchema.getType())) {
+                throw new IllegalArgumentException(
+                        "Only JSON object request bodies can be flattened: " + operation.getOperationId());
+            }
+            if (bodySchema.getProperties() != null) {
+                bodySchema.getProperties().forEach((name, property) -> {
+                    if (parameterNames.contains(name)) {
+                        throw new IllegalArgumentException(
+                                "Request property '" + name
+                                        + "' is defined as both a parameter and a JSON body property: "
+                                        + operation.getOperationId());
+                    }
+                    request.addProperty(name, (Schema<?>) property);
+                    bodyFields.add(name);
+                });
+            }
+            if (bodySchema.getRequired() != null) {
+                required.addAll(bodySchema.getRequired());
             }
         }
         if (!required.isEmpty()) {
@@ -134,7 +156,29 @@ public class OmasJavaClientCodegen extends JavaClientCodegen {
             request.addProperty(EMPTY_REQUEST_PLACEHOLDER, new BooleanSchema());
         }
         requestFieldDescriptions.put(requestClass, descriptions);
+        requestBodyFields.put(requestClass, bodyFields);
         return request;
+    }
+
+    private Schema<?> resolveSchema(OpenAPI openAPI, Schema<?> schema, String operationId) {
+        Schema<?> resolved = schema;
+        Set<String> references = new HashSet<>();
+        while (resolved != null && resolved.get$ref() != null) {
+            String reference = resolved.get$ref();
+            if (!references.add(reference)) {
+                throw new IllegalArgumentException(
+                        "Circular request body schema reference: " + operationId);
+            }
+            String name = reference.substring(reference.lastIndexOf('/') + 1);
+            resolved = openAPI.getComponents() == null || openAPI.getComponents().getSchemas() == null
+                    ? null
+                    : openAPI.getComponents().getSchemas().get(name);
+        }
+        if (resolved == null) {
+            throw new IllegalArgumentException(
+                    "Cannot resolve JSON request body schema: " + operationId);
+        }
+        return resolved;
     }
 
     private List<Operation> operations(PathItem pathItem) {
@@ -333,6 +377,12 @@ public class OmasJavaClientCodegen extends JavaClientCodegen {
                 }
             });
         }
+        if (name.endsWith("OperationRequest")) {
+            Set<String> bodyFields = requestBodyFields.getOrDefault(name, Set.of());
+            model.vars.stream()
+                    .filter(property -> !bodyFields.contains(property.baseName))
+                    .forEach(property -> property.vendorExtensions.put("x-sdk-json-ignore", true));
+        }
         return model;
     }
 
@@ -349,6 +399,9 @@ public class OmasJavaClientCodegen extends JavaClientCodegen {
                 processed.put("exceptionDescription", model.description);
                 processed.put("hasFields", exception.get("hasFields"));
                 processed.put("fields", exception.get("fields"));
+            }
+            if (model.name.endsWith("OperationRequest")) {
+                processed.put("x-sdk-operation-request", true);
             }
         }
         return processed;

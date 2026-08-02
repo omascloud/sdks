@@ -32,32 +32,14 @@ import java.util.Set;
 @JsonDeserialize(builder = AlarmHistoryEntry.Builder.class)
 public final class AlarmHistoryEntry {
 
-
-
-
     private final AlarmStatus oldStatus;
     private final AlarmStatus newStatus;
     private final Long createdAt;
 
     private AlarmHistoryEntry(Builder builder) {
-
-
-
-
         this.oldStatus = builder.oldStatus;
-
-
-
-
-
         this.newStatus = builder.newStatus;
-
-
-
-
-
         this.createdAt = builder.createdAt;
-
     }
 
     /**

@@ -77,6 +77,9 @@ package {{package}};
 import {{import}};
 {{/imports}}
 import com.fasterxml.jackson.annotation.JsonCreator;
+{{#x-sdk-operation-request}}
+import com.fasterxml.jackson.annotation.JsonIgnore;
+{{/x-sdk-operation-request}}
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -95,9 +98,11 @@ import java.util.Set;
  * {{#description}}{{description}}{{/description}}{{^description}}Values for {{classname}}.{{/description}}
  */
 public enum {{classname}} {
-{{#allowableValues}}{{#enumVars}}
+{{#allowableValues}}
+{{#enumVars}}
     {{name}}({{{value}}}){{^-last}},{{/-last}}{{#-last}};{{/-last}}
-{{/enumVars}}{{/allowableValues}}
+{{/enumVars}}
+{{/allowableValues}}
 
     private final {{{dataType}}} value;
 
@@ -141,14 +146,17 @@ public enum {{classname}} {
 public final class {{classname}} {
 
 {{#vars}}
-{{#isEnum}}{{^isContainer}}
+{{#isEnum}}
+{{^isContainer}}
     /**
      * {{#description}}{{description}}{{/description}}{{^description}}Allowed values for {{baseName}}.{{/description}}
      */
     public enum {{datatypeWithEnum}} {
-{{#allowableValues}}{{#enumVars}}
+{{#allowableValues}}
+{{#enumVars}}
         {{name}}({{{value}}}){{^-last}},{{/-last}}{{#-last}};{{/-last}}
-{{/enumVars}}{{/allowableValues}}
+{{/enumVars}}
+{{/allowableValues}}
 
         private final {{{dataType}}} value;
 
@@ -184,7 +192,8 @@ public final class {{classname}} {
         }
     }
 
-{{/isContainer}}{{/isEnum}}
+{{/isContainer}}
+{{/isEnum}}
 {{/vars}}
 {{#vars}}
     private final {{{datatypeWithEnum}}} {{name}};
@@ -205,30 +214,37 @@ public final class {{classname}} {
             throw new IllegalArgumentException("{{name}} must be at most {{maximum}}");
         }
 {{/maximum}}
-{{#isString}}{{#minLength}}
+{{#isString}}
+{{#minLength}}
         if (builder.{{name}} != null && builder.{{name}}.toString().length() < {{minLength}}) {
             throw new IllegalArgumentException("{{name}} is too short");
         }
-{{/minLength}}{{/isString}}
-{{#isString}}{{#maxLength}}
+{{/minLength}}
+{{/isString}}
+{{#isString}}
+{{#maxLength}}
         if (builder.{{name}} != null && builder.{{name}}.toString().length() > {{maxLength}}) {
             throw new IllegalArgumentException("{{name}} is too long");
         }
-{{/maxLength}}{{/isString}}
+{{/maxLength}}
+{{/isString}}
 {{#vendorExtensions.x-sdk-pattern}}
         if (builder.{{name}} != null && !builder.{{name}}.toString().matches("{{{.}}}")) {
             throw new IllegalArgumentException("{{name}} has an invalid format");
         }
 {{/vendorExtensions.x-sdk-pattern}}
-{{#isArray}}{{#minItems}}
+{{#isArray}}
+{{#minItems}}
         if (builder.{{name}} != null && builder.{{name}}.size() < {{minItems}}) {
             throw new IllegalArgumentException("{{name}} has too few items");
         }
-{{/minItems}}{{#maxItems}}
+{{/minItems}}
+{{#maxItems}}
         if (builder.{{name}} != null && builder.{{name}}.size() > {{maxItems}}) {
             throw new IllegalArgumentException("{{name}} has too many items");
         }
-{{/maxItems}}{{/isArray}}
+{{/maxItems}}
+{{/isArray}}
 {{#isArray}}
 {{#uniqueItems}}
         this.{{name}} = builder.{{name}} == null ? null : Set.copyOf(builder.{{name}});
@@ -240,9 +256,11 @@ public final class {{classname}} {
 {{#isMap}}
         this.{{name}} = builder.{{name}} == null ? null : Map.copyOf(builder.{{name}});
 {{/isMap}}
-{{^isArray}}{{^isMap}}
+{{^isArray}}
+{{^isMap}}
         this.{{name}} = builder.{{name}};
-{{/isMap}}{{/isArray}}
+{{/isMap}}
+{{/isArray}}
 {{/vars}}
     }
 
@@ -261,7 +279,12 @@ public final class {{classname}} {
      *
      * @return the {{baseName}} value
      */
+{{#vendorExtensions.x-sdk-json-ignore}}
+    @JsonIgnore
+{{/vendorExtensions.x-sdk-json-ignore}}
+{{^vendorExtensions.x-sdk-json-ignore}}
     @JsonProperty("{{baseName}}")
+{{/vendorExtensions.x-sdk-json-ignore}}
     public {{{datatypeWithEnum}}} {{name}}() {
         return {{name}};
     }

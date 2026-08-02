@@ -35,23 +35,12 @@ import java.util.Set;
 @JsonDeserialize(builder = GetMetricDataResponse.Builder.class)
 public final class GetMetricDataResponse {
 
-
-
     private final List<DataPointResult> entries;
     private final String nextToken;
 
     private GetMetricDataResponse(Builder builder) {
-
-
-
         this.entries = builder.entries == null ? null : List.copyOf(builder.entries);
-
-
-
-
-
         this.nextToken = builder.nextToken;
-
     }
 
     /**

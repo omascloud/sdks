@@ -32,10 +32,6 @@ import java.util.Set;
 @JsonDeserialize(builder = StatisticSet.Builder.class)
 public final class StatisticSet {
 
-
-
-
-
     private final BigDecimal avg;
     private final BigDecimal min;
     private final BigDecimal max;
@@ -49,12 +45,7 @@ public final class StatisticSet {
         if (builder.avg != null && new BigDecimal(builder.avg.toString()).compareTo(new BigDecimal("2147483647")) > 0) {
             throw new IllegalArgumentException("avg must be at most 2147483647");
         }
-
-
-
-
         this.avg = builder.avg;
-
         Objects.requireNonNull(builder.min, "min");
         if (builder.min != null && new BigDecimal(builder.min.toString()).compareTo(new BigDecimal("-2147483647")) < 0) {
             throw new IllegalArgumentException("min must be at least -2147483647");
@@ -62,12 +53,7 @@ public final class StatisticSet {
         if (builder.min != null && new BigDecimal(builder.min.toString()).compareTo(new BigDecimal("2147483647")) > 0) {
             throw new IllegalArgumentException("min must be at most 2147483647");
         }
-
-
-
-
         this.min = builder.min;
-
         Objects.requireNonNull(builder.max, "max");
         if (builder.max != null && new BigDecimal(builder.max.toString()).compareTo(new BigDecimal("-2147483647")) < 0) {
             throw new IllegalArgumentException("max must be at least -2147483647");
@@ -75,12 +61,7 @@ public final class StatisticSet {
         if (builder.max != null && new BigDecimal(builder.max.toString()).compareTo(new BigDecimal("2147483647")) > 0) {
             throw new IllegalArgumentException("max must be at most 2147483647");
         }
-
-
-
-
         this.max = builder.max;
-
         Objects.requireNonNull(builder.sampleCount, "sampleCount");
         if (builder.sampleCount != null && new BigDecimal(builder.sampleCount.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("sampleCount must be at least 1");
@@ -88,12 +69,7 @@ public final class StatisticSet {
         if (builder.sampleCount != null && new BigDecimal(builder.sampleCount.toString()).compareTo(new BigDecimal("2147483647")) > 0) {
             throw new IllegalArgumentException("sampleCount must be at most 2147483647");
         }
-
-
-
-
         this.sampleCount = builder.sampleCount;
-
     }
 
     /**

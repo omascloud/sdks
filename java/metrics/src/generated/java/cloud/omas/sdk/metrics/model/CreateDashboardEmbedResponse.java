@@ -31,11 +31,6 @@ import java.util.Set;
 @JsonDeserialize(builder = CreateDashboardEmbedResponse.Builder.class)
 public final class CreateDashboardEmbedResponse {
 
-
-
-
-
-
     private final String token;
     private final String tokenId;
     private final String role;
@@ -44,43 +39,18 @@ public final class CreateDashboardEmbedResponse {
 
     private CreateDashboardEmbedResponse(Builder builder) {
         Objects.requireNonNull(builder.token, "token");
-
-
-
-
         this.token = builder.token;
-
         Objects.requireNonNull(builder.tokenId, "tokenId");
-
-
         if (builder.tokenId != null && !builder.tokenId.toString().matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$")) {
             throw new IllegalArgumentException("tokenId has an invalid format");
         }
-
-
         this.tokenId = builder.tokenId;
-
         Objects.requireNonNull(builder.role, "role");
-
-
-
-
         this.role = builder.role;
-
         Objects.requireNonNull(builder.iframe, "iframe");
-
-
-
-
         this.iframe = builder.iframe;
-
         Objects.requireNonNull(builder.expiresAt, "expiresAt");
-
-
-
-
         this.expiresAt = builder.expiresAt;
-
     }
 
     /**

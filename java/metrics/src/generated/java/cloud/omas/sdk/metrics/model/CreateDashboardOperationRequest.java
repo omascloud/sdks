@@ -8,13 +8,13 @@
 
 package cloud.omas.sdk.metrics.model;
 
-import cloud.omas.sdk.metrics.model.CreateDashboardRequest;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,17 +32,30 @@ import java.util.Set;
 @JsonDeserialize(builder = CreateDashboardOperationRequest.Builder.class)
 public final class CreateDashboardOperationRequest {
 
-
-    private final CreateDashboardRequest body;
+    private final String name;
+    private final Boolean autoRefreshEnabled;
+    private final Integer refreshIntervalMs;
 
     private CreateDashboardOperationRequest(Builder builder) {
-        Objects.requireNonNull(builder.body, "body");
-
-
-
-
-        this.body = builder.body;
-
+        Objects.requireNonNull(builder.name, "name");
+        if (builder.name != null && builder.name.toString().length() < 1) {
+            throw new IllegalArgumentException("name is too short");
+        }
+        if (builder.name != null && builder.name.toString().length() > 128) {
+            throw new IllegalArgumentException("name is too long");
+        }
+        if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+(?: [A-Za-z0-9_-]+)*$")) {
+            throw new IllegalArgumentException("name has an invalid format");
+        }
+        this.name = builder.name;
+        this.autoRefreshEnabled = builder.autoRefreshEnabled;
+        if (builder.refreshIntervalMs != null && new BigDecimal(builder.refreshIntervalMs.toString()).compareTo(new BigDecimal("5000")) < 0) {
+            throw new IllegalArgumentException("refreshIntervalMs must be at least 5000");
+        }
+        if (builder.refreshIntervalMs != null && new BigDecimal(builder.refreshIntervalMs.toString()).compareTo(new BigDecimal("300000")) > 0) {
+            throw new IllegalArgumentException("refreshIntervalMs must be at most 300000");
+        }
+        this.refreshIntervalMs = builder.refreshIntervalMs;
     }
 
     /**
@@ -55,13 +68,33 @@ public final class CreateDashboardOperationRequest {
     }
 
     /**
-     * The request body.
+     * Display name using words made of letters, numbers, underscores, and hyphens separated by single spaces.
      *
-     * @return the body value
+     * @return the name value
      */
-    @JsonProperty("body")
-    public CreateDashboardRequest body() {
-        return body;
+    @JsonProperty("name")
+    public String name() {
+        return name;
+    }
+
+    /**
+     * Flag to enable automatic refreshing.
+     *
+     * @return the autoRefreshEnabled value
+     */
+    @JsonProperty("autoRefreshEnabled")
+    public Boolean autoRefreshEnabled() {
+        return autoRefreshEnabled;
+    }
+
+    /**
+     * Automatic refresh interval in milliseconds (5s to 5min).
+     *
+     * @return the refreshIntervalMs value
+     */
+    @JsonProperty("refreshIntervalMs")
+    public Integer refreshIntervalMs() {
+        return refreshIntervalMs;
     }
 
     /**
@@ -70,18 +103,42 @@ public final class CreateDashboardOperationRequest {
     @JsonPOJOBuilder(withPrefix = "")
     public static final class Builder {
 
-        private CreateDashboardRequest body;
+        private String name;
+        private Boolean autoRefreshEnabled;
+        private Integer refreshIntervalMs;
 
         private Builder() {}
 
         /**
-         * Sets body.
+         * Sets name.
          *
-         * @param body The request body.
+         * @param name Display name using words made of letters, numbers, underscores, and hyphens separated by single spaces.
          * @return this builder
          */
-        public Builder body(CreateDashboardRequest body) {
-            this.body = body;
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        /**
+         * Sets autoRefreshEnabled.
+         *
+         * @param autoRefreshEnabled Flag to enable automatic refreshing.
+         * @return this builder
+         */
+        public Builder autoRefreshEnabled(Boolean autoRefreshEnabled) {
+            this.autoRefreshEnabled = autoRefreshEnabled;
+            return this;
+        }
+
+        /**
+         * Sets refreshIntervalMs.
+         *
+         * @param refreshIntervalMs Automatic refresh interval in milliseconds (5s to 5min).
+         * @return this builder
+         */
+        public Builder refreshIntervalMs(Integer refreshIntervalMs) {
+            this.refreshIntervalMs = refreshIntervalMs;
             return this;
         }
 

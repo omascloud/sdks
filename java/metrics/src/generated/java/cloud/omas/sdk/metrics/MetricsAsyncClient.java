@@ -61,7 +61,7 @@ public final class MetricsAsyncClient extends AbstractSdkClient {
         RequestUriBuilder uri = requestUri("/v1/alarms/{alarmName}");
         uri.pathParameter("alarmName", request.alarmName());
         SdkHttpRequest.Builder httpRequest = httpRequest("POST", uri);
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
         return execute("createAlarm", httpRequest.build())
                 .thenApply(response -> deserialize(response.body(), new TypeReference<Alarm>() {}));
     }
@@ -79,7 +79,7 @@ public final class MetricsAsyncClient extends AbstractSdkClient {
         Objects.requireNonNull(request, "request");
         RequestUriBuilder uri = requestUri("/v1/dashboards");
         SdkHttpRequest.Builder httpRequest = httpRequest("POST", uri);
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
         return execute("createDashboard", httpRequest.build())
                 .thenApply(response -> deserialize(response.body(), new TypeReference<Dashboard>() {}));
     }
@@ -115,7 +115,7 @@ public final class MetricsAsyncClient extends AbstractSdkClient {
         Objects.requireNonNull(request, "request");
         RequestUriBuilder uri = requestUri("/v1/notification-channels");
         SdkHttpRequest.Builder httpRequest = httpRequest("POST", uri);
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
         return execute("createNotificationChannel", httpRequest.build())
                 .thenApply(response -> deserialize(response.body(), new TypeReference<NotificationChannel>() {}));
     }
@@ -420,7 +420,7 @@ public final class MetricsAsyncClient extends AbstractSdkClient {
         RequestUriBuilder uri = requestUri("/v1/metrics/{metricName}");
         uri.pathParameter("metricName", request.metricName());
         SdkHttpRequest.Builder httpRequest = httpRequest("POST", uri);
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
         return execute("putMetricData", httpRequest.build()).thenApply(response -> null);
     }
 
@@ -438,7 +438,7 @@ public final class MetricsAsyncClient extends AbstractSdkClient {
         RequestUriBuilder uri = requestUri("/v1/alarms/{alarmName}");
         uri.pathParameter("alarmName", request.alarmName());
         SdkHttpRequest.Builder httpRequest = httpRequest("PUT", uri);
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
         return execute("updateAlarm", httpRequest.build())
                 .thenApply(response -> deserialize(response.body(), new TypeReference<Alarm>() {}));
     }
@@ -457,7 +457,7 @@ public final class MetricsAsyncClient extends AbstractSdkClient {
         RequestUriBuilder uri = requestUri("/v1/dashboards/{dashboardId}");
         uri.pathParameter("dashboardId", request.dashboardId());
         SdkHttpRequest.Builder httpRequest = httpRequest("PUT", uri);
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
         return execute("updateDashboard", httpRequest.build())
                 .thenApply(response -> deserialize(response.body(), new TypeReference<Dashboard>() {}));
     }
@@ -476,7 +476,7 @@ public final class MetricsAsyncClient extends AbstractSdkClient {
         RequestUriBuilder uri = requestUri("/v1/notification-channels/{channelName}");
         uri.pathParameter("channelName", request.channelName());
         SdkHttpRequest.Builder httpRequest = httpRequest("PUT", uri);
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
         return execute("updateNotificationChannel", httpRequest.build())
                 .thenApply(response -> deserialize(response.body(), new TypeReference<NotificationChannel>() {}));
     }
@@ -495,7 +495,7 @@ public final class MetricsAsyncClient extends AbstractSdkClient {
         RequestUriBuilder uri = requestUri("/v1/notification-channels/{channelName}/verify");
         uri.pathParameter("channelName", request.channelName());
         SdkHttpRequest.Builder httpRequest = httpRequest("POST", uri);
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
         return execute("verifyNotificationChannel", httpRequest.build())
                 .thenApply(response -> deserialize(response.body(), new TypeReference<NotificationChannel>() {}));
     }

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -31,24 +32,17 @@ import java.util.Set;
 @JsonDeserialize(builder = CreateDashboardEmbedOperationRequest.Builder.class)
 public final class CreateDashboardEmbedOperationRequest {
 
-
     private final String dashboardId;
 
     private CreateDashboardEmbedOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.dashboardId, "dashboardId");
-
-
         if (builder.dashboardId != null && builder.dashboardId.toString().length() > 255) {
             throw new IllegalArgumentException("dashboardId is too long");
         }
-
         if (builder.dashboardId != null && !builder.dashboardId.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("dashboardId has an invalid format");
         }
-
-
         this.dashboardId = builder.dashboardId;
-
     }
 
     /**
@@ -65,7 +59,7 @@ public final class CreateDashboardEmbedOperationRequest {
      *
      * @return the dashboardId value
      */
-    @JsonProperty("dashboardId")
+    @JsonIgnore
     public String dashboardId() {
         return dashboardId;
     }

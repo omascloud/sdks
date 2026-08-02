@@ -31,35 +31,17 @@ import java.util.Set;
 @JsonDeserialize(builder = AlarmStatusCounts.Builder.class)
 public final class AlarmStatusCounts {
 
-
-
-
     private final Long ok;
     private final Long inAlarm;
     private final Long insufficientData;
 
     private AlarmStatusCounts(Builder builder) {
         Objects.requireNonNull(builder.ok, "ok");
-
-
-
-
         this.ok = builder.ok;
-
         Objects.requireNonNull(builder.inAlarm, "inAlarm");
-
-
-
-
         this.inAlarm = builder.inAlarm;
-
         Objects.requireNonNull(builder.insufficientData, "insufficientData");
-
-
-
-
         this.insufficientData = builder.insufficientData;
-
     }
 
     /**

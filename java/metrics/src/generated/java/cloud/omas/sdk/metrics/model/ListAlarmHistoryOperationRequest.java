@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -31,50 +32,30 @@ import java.util.Set;
 @JsonDeserialize(builder = ListAlarmHistoryOperationRequest.Builder.class)
 public final class ListAlarmHistoryOperationRequest {
 
-
-
-
     private final String alarmName;
     private final Integer maxResults;
     private final String nextToken;
 
     private ListAlarmHistoryOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.alarmName, "alarmName");
-
-
         if (builder.alarmName != null && builder.alarmName.toString().length() > 255) {
             throw new IllegalArgumentException("alarmName is too long");
         }
-
         if (builder.alarmName != null && !builder.alarmName.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("alarmName has an invalid format");
         }
-
-
         this.alarmName = builder.alarmName;
-
         if (builder.maxResults != null && new BigDecimal(builder.maxResults.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("maxResults must be at least 1");
         }
         if (builder.maxResults != null && new BigDecimal(builder.maxResults.toString()).compareTo(new BigDecimal("100")) > 0) {
             throw new IllegalArgumentException("maxResults must be at most 100");
         }
-
-
-
-
         this.maxResults = builder.maxResults;
-
-
-
         if (builder.nextToken != null && builder.nextToken.toString().length() > 4096) {
             throw new IllegalArgumentException("nextToken is too long");
         }
-
-
-
         this.nextToken = builder.nextToken;
-
     }
 
     /**
@@ -91,7 +72,7 @@ public final class ListAlarmHistoryOperationRequest {
      *
      * @return the alarmName value
      */
-    @JsonProperty("alarmName")
+    @JsonIgnore
     public String alarmName() {
         return alarmName;
     }
@@ -101,7 +82,7 @@ public final class ListAlarmHistoryOperationRequest {
      *
      * @return the maxResults value
      */
-    @JsonProperty("maxResults")
+    @JsonIgnore
     public Integer maxResults() {
         return maxResults;
     }
@@ -111,7 +92,7 @@ public final class ListAlarmHistoryOperationRequest {
      *
      * @return the nextToken value
      */
-    @JsonProperty("nextToken")
+    @JsonIgnore
     public String nextToken() {
         return nextToken;
     }

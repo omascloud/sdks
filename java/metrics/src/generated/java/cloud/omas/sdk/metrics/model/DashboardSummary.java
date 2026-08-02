@@ -31,10 +31,6 @@ import java.util.Set;
 @JsonDeserialize(builder = DashboardSummary.Builder.class)
 public final class DashboardSummary {
 
-
-
-
-
     private final String id;
     private final String name;
     private final Integer chartCount;
@@ -42,42 +38,20 @@ public final class DashboardSummary {
 
     private DashboardSummary(Builder builder) {
         Objects.requireNonNull(builder.id, "id");
-
-
-
-
         this.id = builder.id;
-
         Objects.requireNonNull(builder.name, "name");
-
         if (builder.name != null && builder.name.toString().length() < 1) {
             throw new IllegalArgumentException("name is too short");
         }
-
-
         if (builder.name != null && builder.name.toString().length() > 128) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+(?: [A-Za-z0-9_-]+)*$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
-
-
-
-
         this.chartCount = builder.chartCount;
-
-
-
-
-
         this.updatedAt = builder.updatedAt;
-
     }
 
     /**

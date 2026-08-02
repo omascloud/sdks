@@ -31,41 +31,26 @@ import java.util.Set;
 @JsonDeserialize(builder = Dimension.Builder.class)
 public final class Dimension {
 
-
-
     private final String name;
     private final String value;
 
     private Dimension(Builder builder) {
         Objects.requireNonNull(builder.name, "name");
-
-
         if (builder.name != null && builder.name.toString().length() > 255) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
         Objects.requireNonNull(builder.value, "value");
-
         if (builder.value != null && builder.value.toString().length() < 1) {
             throw new IllegalArgumentException("value is too short");
         }
-
-
         if (builder.value != null && builder.value.toString().length() > 1024) {
             throw new IllegalArgumentException("value is too long");
         }
-
-
-
         this.value = builder.value;
-
     }
 
     /**

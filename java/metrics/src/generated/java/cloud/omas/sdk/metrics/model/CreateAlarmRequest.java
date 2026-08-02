@@ -36,13 +36,6 @@ import java.util.Set;
 @JsonDeserialize(builder = CreateAlarmRequest.Builder.class)
 public final class CreateAlarmRequest {
 
-
-
-
-
-
-
-
     private final List<AlarmVariable> variables;
     private final String expression;
     private final Integer evaluationPeriodInMin;
@@ -53,34 +46,21 @@ public final class CreateAlarmRequest {
 
     private CreateAlarmRequest(Builder builder) {
         Objects.requireNonNull(builder.variables, "variables");
-
-
-
         if (builder.variables != null && builder.variables.size() < 1) {
             throw new IllegalArgumentException("variables has too few items");
         }
-
         if (builder.variables != null && builder.variables.size() > 10) {
             throw new IllegalArgumentException("variables has too many items");
         }
-
         this.variables = builder.variables == null ? null : List.copyOf(builder.variables);
-
         Objects.requireNonNull(builder.expression, "expression");
-
         if (builder.expression != null && builder.expression.toString().length() < 1) {
             throw new IllegalArgumentException("expression is too short");
         }
-
-
         if (builder.expression != null && builder.expression.toString().length() > 1024) {
             throw new IllegalArgumentException("expression is too long");
         }
-
-
-
         this.expression = builder.expression;
-
         Objects.requireNonNull(builder.evaluationPeriodInMin, "evaluationPeriodInMin");
         if (builder.evaluationPeriodInMin != null && new BigDecimal(builder.evaluationPeriodInMin.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("evaluationPeriodInMin must be at least 1");
@@ -88,12 +68,7 @@ public final class CreateAlarmRequest {
         if (builder.evaluationPeriodInMin != null && new BigDecimal(builder.evaluationPeriodInMin.toString()).compareTo(new BigDecimal("1440")) > 0) {
             throw new IllegalArgumentException("evaluationPeriodInMin must be at most 1440");
         }
-
-
-
-
         this.evaluationPeriodInMin = builder.evaluationPeriodInMin;
-
         Objects.requireNonNull(builder.datapointsToAlarm, "datapointsToAlarm");
         if (builder.datapointsToAlarm != null && new BigDecimal(builder.datapointsToAlarm.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("datapointsToAlarm must be at least 1");
@@ -101,12 +76,7 @@ public final class CreateAlarmRequest {
         if (builder.datapointsToAlarm != null && new BigDecimal(builder.datapointsToAlarm.toString()).compareTo(new BigDecimal("1440")) > 0) {
             throw new IllegalArgumentException("datapointsToAlarm must be at most 1440");
         }
-
-
-
-
         this.datapointsToAlarm = builder.datapointsToAlarm;
-
         Objects.requireNonNull(builder.resolution, "resolution");
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("resolution must be at least 1");
@@ -114,28 +84,13 @@ public final class CreateAlarmRequest {
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("3600")) > 0) {
             throw new IllegalArgumentException("resolution must be at most 3600");
         }
-
-
-
-
         this.resolution = builder.resolution;
-
         Objects.requireNonNull(builder.treatMissingDataAs, "treatMissingDataAs");
-
-
-
-
         this.treatMissingDataAs = builder.treatMissingDataAs;
-
-
-
-
         if (builder.notificationChannels != null && builder.notificationChannels.size() > 10) {
             throw new IllegalArgumentException("notificationChannels has too many items");
         }
-
         this.notificationChannels = builder.notificationChannels == null ? null : List.copyOf(builder.notificationChannels);
-
     }
 
     /**

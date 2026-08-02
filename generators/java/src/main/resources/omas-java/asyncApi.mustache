@@ -80,7 +80,7 @@ public final class {{asyncClientClass}} extends AbstractSdkClient {
         }
 {{/headerParams}}
 {{#bodyParam}}
-        httpRequest.header("Content-Type", "application/json").body(serialize(request.body()));
+        httpRequest.header("Content-Type", "application/json").body(serialize(request));
 {{/bodyParam}}
 {{#returnType}}
         return execute("{{operationId}}", httpRequest.build())

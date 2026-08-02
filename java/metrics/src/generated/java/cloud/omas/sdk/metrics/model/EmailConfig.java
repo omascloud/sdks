@@ -31,25 +31,17 @@ import java.util.Set;
 @JsonDeserialize(builder = EmailConfig.Builder.class)
 public final class EmailConfig {
 
-
     private final String email;
 
     private EmailConfig(Builder builder) {
         Objects.requireNonNull(builder.email, "email");
-
         if (builder.email != null && builder.email.toString().length() < 1) {
             throw new IllegalArgumentException("email is too short");
         }
-
-
         if (builder.email != null && builder.email.toString().length() > 320) {
             throw new IllegalArgumentException("email is too long");
         }
-
-
-
         this.email = builder.email;
-
     }
 
     /**

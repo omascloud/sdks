@@ -35,13 +35,6 @@ import java.util.Set;
 @JsonDeserialize(builder = Dashboard.Builder.class)
 public final class Dashboard {
 
-
-
-
-
-
-
-
     private final String id;
     private final String name;
     private final List<ChartConfig> charts;
@@ -52,66 +45,30 @@ public final class Dashboard {
 
     private Dashboard(Builder builder) {
         Objects.requireNonNull(builder.id, "id");
-
-
-
-
         this.id = builder.id;
-
         Objects.requireNonNull(builder.name, "name");
-
         if (builder.name != null && builder.name.toString().length() < 1) {
             throw new IllegalArgumentException("name is too short");
         }
-
-
         if (builder.name != null && builder.name.toString().length() > 128) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+(?: [A-Za-z0-9_-]+)*$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
         Objects.requireNonNull(builder.charts, "charts");
-
-
-
         this.charts = builder.charts == null ? null : List.copyOf(builder.charts);
-
-
-
-
-
         this.autoRefreshEnabled = builder.autoRefreshEnabled;
-
         if (builder.refreshIntervalMs != null && new BigDecimal(builder.refreshIntervalMs.toString()).compareTo(new BigDecimal("5000")) < 0) {
             throw new IllegalArgumentException("refreshIntervalMs must be at least 5000");
         }
         if (builder.refreshIntervalMs != null && new BigDecimal(builder.refreshIntervalMs.toString()).compareTo(new BigDecimal("300000")) > 0) {
             throw new IllegalArgumentException("refreshIntervalMs must be at most 300000");
         }
-
-
-
-
         this.refreshIntervalMs = builder.refreshIntervalMs;
-
-
-
-
-
         this.createdAt = builder.createdAt;
-
-
-
-
-
         this.updatedAt = builder.updatedAt;
-
     }
 
     /**

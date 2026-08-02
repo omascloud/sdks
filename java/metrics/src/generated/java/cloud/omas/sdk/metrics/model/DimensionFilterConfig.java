@@ -32,50 +32,29 @@ import java.util.Set;
 @JsonDeserialize(builder = DimensionFilterConfig.Builder.class)
 public final class DimensionFilterConfig {
 
-
-
-
     private final String dimensionName;
     private final String dimensionValue;
     private final DimensionFilterOperator operator;
 
     private DimensionFilterConfig(Builder builder) {
         Objects.requireNonNull(builder.dimensionName, "dimensionName");
-
-
         if (builder.dimensionName != null && builder.dimensionName.toString().length() > 255) {
             throw new IllegalArgumentException("dimensionName is too long");
         }
-
         if (builder.dimensionName != null && !builder.dimensionName.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("dimensionName has an invalid format");
         }
-
-
         this.dimensionName = builder.dimensionName;
-
         Objects.requireNonNull(builder.dimensionValue, "dimensionValue");
-
         if (builder.dimensionValue != null && builder.dimensionValue.toString().length() < 1) {
             throw new IllegalArgumentException("dimensionValue is too short");
         }
-
-
         if (builder.dimensionValue != null && builder.dimensionValue.toString().length() > 1024) {
             throw new IllegalArgumentException("dimensionValue is too long");
         }
-
-
-
         this.dimensionValue = builder.dimensionValue;
-
         Objects.requireNonNull(builder.operator, "operator");
-
-
-
-
         this.operator = builder.operator;
-
     }
 
     /**

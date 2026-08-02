@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -34,15 +35,6 @@ import java.util.Set;
 @JsonDeserialize(builder = GetMetricDataOperationRequest.Builder.class)
 public final class GetMetricDataOperationRequest {
 
-
-
-
-
-
-
-
-
-
     private final String metricName;
     private final Integer resolution;
     private final String aggregation;
@@ -55,98 +47,49 @@ public final class GetMetricDataOperationRequest {
 
     private GetMetricDataOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.metricName, "metricName");
-
-
         if (builder.metricName != null && builder.metricName.toString().length() > 255) {
             throw new IllegalArgumentException("metricName is too long");
         }
-
         if (builder.metricName != null && !builder.metricName.toString().matches("^[A-Za-z0-9_.-]+$")) {
             throw new IllegalArgumentException("metricName has an invalid format");
         }
-
-
         this.metricName = builder.metricName;
-
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("resolution must be at least 1");
         }
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("3600")) > 0) {
             throw new IllegalArgumentException("resolution must be at most 3600");
         }
-
-
-
-
         this.resolution = builder.resolution;
-
-
         if (builder.aggregation != null && builder.aggregation.toString().length() < 3) {
             throw new IllegalArgumentException("aggregation is too short");
         }
-
-
         if (builder.aggregation != null && builder.aggregation.toString().length() > 128) {
             throw new IllegalArgumentException("aggregation is too long");
         }
-
-
-
         this.aggregation = builder.aggregation;
-
         Objects.requireNonNull(builder.startTimestamp, "startTimestamp");
-
-
-
-
         this.startTimestamp = builder.startTimestamp;
-
-
-
-
-
         this.endTimestamp = builder.endTimestamp;
-
         if (builder.maxResults != null && new BigDecimal(builder.maxResults.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("maxResults must be at least 1");
         }
         if (builder.maxResults != null && new BigDecimal(builder.maxResults.toString()).compareTo(new BigDecimal("10000")) > 0) {
             throw new IllegalArgumentException("maxResults must be at most 10000");
         }
-
-
-
-
         this.maxResults = builder.maxResults;
-
-
-
-
         if (builder.includeDimensions != null && builder.includeDimensions.size() > 30) {
             throw new IllegalArgumentException("includeDimensions has too many items");
         }
-
         this.includeDimensions = builder.includeDimensions == null ? null : List.copyOf(builder.includeDimensions);
-
-
-
-
         if (builder.excludeDimensions != null && builder.excludeDimensions.size() > 30) {
             throw new IllegalArgumentException("excludeDimensions has too many items");
         }
-
         this.excludeDimensions = builder.excludeDimensions == null ? null : List.copyOf(builder.excludeDimensions);
-
-
-
         if (builder.nextToken != null && builder.nextToken.toString().length() > 1024) {
             throw new IllegalArgumentException("nextToken is too long");
         }
-
-
-
         this.nextToken = builder.nextToken;
-
     }
 
     /**
@@ -163,7 +106,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the metricName value
      */
-    @JsonProperty("metricName")
+    @JsonIgnore
     public String metricName() {
         return metricName;
     }
@@ -173,7 +116,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the resolution value
      */
-    @JsonProperty("resolution")
+    @JsonIgnore
     public Integer resolution() {
         return resolution;
     }
@@ -183,7 +126,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the aggregation value
      */
-    @JsonProperty("aggregation")
+    @JsonIgnore
     public String aggregation() {
         return aggregation;
     }
@@ -193,7 +136,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the startTimestamp value
      */
-    @JsonProperty("startTimestamp")
+    @JsonIgnore
     public Long startTimestamp() {
         return startTimestamp;
     }
@@ -203,7 +146,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the endTimestamp value
      */
-    @JsonProperty("endTimestamp")
+    @JsonIgnore
     public Long endTimestamp() {
         return endTimestamp;
     }
@@ -213,7 +156,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the maxResults value
      */
-    @JsonProperty("maxResults")
+    @JsonIgnore
     public Integer maxResults() {
         return maxResults;
     }
@@ -223,7 +166,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the includeDimensions value
      */
-    @JsonProperty("includeDimensions")
+    @JsonIgnore
     public List<String> includeDimensions() {
         return includeDimensions;
     }
@@ -233,7 +176,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the excludeDimensions value
      */
-    @JsonProperty("excludeDimensions")
+    @JsonIgnore
     public List<String> excludeDimensions() {
         return excludeDimensions;
     }
@@ -243,7 +186,7 @@ public final class GetMetricDataOperationRequest {
      *
      * @return the nextToken value
      */
-    @JsonProperty("nextToken")
+    @JsonIgnore
     public String nextToken() {
         return nextToken;
     }

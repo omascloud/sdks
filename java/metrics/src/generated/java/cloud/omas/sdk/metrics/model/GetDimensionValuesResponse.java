@@ -34,15 +34,10 @@ import java.util.Set;
 @JsonDeserialize(builder = GetDimensionValuesResponse.Builder.class)
 public final class GetDimensionValuesResponse {
 
-
     private final List<String> values;
 
     private GetDimensionValuesResponse(Builder builder) {
-
-
-
         this.values = builder.values == null ? null : List.copyOf(builder.values);
-
     }
 
     /**

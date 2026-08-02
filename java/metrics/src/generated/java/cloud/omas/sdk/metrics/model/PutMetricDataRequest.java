@@ -35,24 +35,17 @@ import java.util.Set;
 @JsonDeserialize(builder = PutMetricDataRequest.Builder.class)
 public final class PutMetricDataRequest {
 
-
     private final List<DataPoint> entries;
 
     private PutMetricDataRequest(Builder builder) {
         Objects.requireNonNull(builder.entries, "entries");
-
-
-
         if (builder.entries != null && builder.entries.size() < 1) {
             throw new IllegalArgumentException("entries has too few items");
         }
-
         if (builder.entries != null && builder.entries.size() > 1000) {
             throw new IllegalArgumentException("entries has too many items");
         }
-
         this.entries = builder.entries == null ? null : List.copyOf(builder.entries);
-
     }
 
     /**

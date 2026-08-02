@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -31,24 +32,17 @@ import java.util.Set;
 @JsonDeserialize(builder = GetAlarmOperationRequest.Builder.class)
 public final class GetAlarmOperationRequest {
 
-
     private final String alarmName;
 
     private GetAlarmOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.alarmName, "alarmName");
-
-
         if (builder.alarmName != null && builder.alarmName.toString().length() > 255) {
             throw new IllegalArgumentException("alarmName is too long");
         }
-
         if (builder.alarmName != null && !builder.alarmName.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("alarmName has an invalid format");
         }
-
-
         this.alarmName = builder.alarmName;
-
     }
 
     /**
@@ -65,7 +59,7 @@ public final class GetAlarmOperationRequest {
      *
      * @return the alarmName value
      */
-    @JsonProperty("alarmName")
+    @JsonIgnore
     public String alarmName() {
         return alarmName;
     }

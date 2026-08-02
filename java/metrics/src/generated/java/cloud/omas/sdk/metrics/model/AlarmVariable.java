@@ -35,11 +35,6 @@ import java.util.Set;
 @JsonDeserialize(builder = AlarmVariable.Builder.class)
 public final class AlarmVariable {
 
-
-
-
-
-
     private final String name;
     private final String metricName;
     private final List<Dimension> includeDimensions;
@@ -48,66 +43,37 @@ public final class AlarmVariable {
 
     private AlarmVariable(Builder builder) {
         Objects.requireNonNull(builder.name, "name");
-
-
         if (builder.name != null && builder.name.toString().length() > 64) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z_][A-Za-z0-9_]*$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
         Objects.requireNonNull(builder.metricName, "metricName");
-
-
         if (builder.metricName != null && builder.metricName.toString().length() > 255) {
             throw new IllegalArgumentException("metricName is too long");
         }
-
         if (builder.metricName != null && !builder.metricName.toString().matches("^[A-Za-z0-9_.-]+$")) {
             throw new IllegalArgumentException("metricName has an invalid format");
         }
-
-
         this.metricName = builder.metricName;
-
-
-
-
         if (builder.includeDimensions != null && builder.includeDimensions.size() > 30) {
             throw new IllegalArgumentException("includeDimensions has too many items");
         }
-
         this.includeDimensions = builder.includeDimensions == null ? null : List.copyOf(builder.includeDimensions);
-
-
-
-
         if (builder.excludeDimensions != null && builder.excludeDimensions.size() > 30) {
             throw new IllegalArgumentException("excludeDimensions has too many items");
         }
-
         this.excludeDimensions = builder.excludeDimensions == null ? null : List.copyOf(builder.excludeDimensions);
-
         Objects.requireNonNull(builder.aggregation, "aggregation");
-
         if (builder.aggregation != null && builder.aggregation.toString().length() < 3) {
             throw new IllegalArgumentException("aggregation is too short");
         }
-
-
         if (builder.aggregation != null && builder.aggregation.toString().length() > 128) {
             throw new IllegalArgumentException("aggregation is too long");
         }
-
-
-
         this.aggregation = builder.aggregation;
-
     }
 
     /**

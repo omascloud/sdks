@@ -8,13 +8,15 @@
 
 package cloud.omas.sdk.metrics.model;
 
-import cloud.omas.sdk.metrics.model.CreateNotificationChannelRequest;
+import cloud.omas.sdk.metrics.model.NotificationChannelConfig;
+import cloud.omas.sdk.metrics.model.NotificationChannelType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,17 +34,23 @@ import java.util.Set;
 @JsonDeserialize(builder = CreateNotificationChannelOperationRequest.Builder.class)
 public final class CreateNotificationChannelOperationRequest {
 
-
-    private final CreateNotificationChannelRequest body;
+    private final String name;
+    private final NotificationChannelType type;
+    private final NotificationChannelConfig config;
 
     private CreateNotificationChannelOperationRequest(Builder builder) {
-        Objects.requireNonNull(builder.body, "body");
-
-
-
-
-        this.body = builder.body;
-
+        Objects.requireNonNull(builder.name, "name");
+        if (builder.name != null && builder.name.toString().length() > 255) {
+            throw new IllegalArgumentException("name is too long");
+        }
+        if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+$")) {
+            throw new IllegalArgumentException("name has an invalid format");
+        }
+        this.name = builder.name;
+        Objects.requireNonNull(builder.type, "type");
+        this.type = builder.type;
+        Objects.requireNonNull(builder.config, "config");
+        this.config = builder.config;
     }
 
     /**
@@ -55,13 +63,33 @@ public final class CreateNotificationChannelOperationRequest {
     }
 
     /**
-     * The request body.
+     * Identifier using only letters, numbers, underscores, and hyphens.
      *
-     * @return the body value
+     * @return the name value
      */
-    @JsonProperty("body")
-    public CreateNotificationChannelRequest body() {
-        return body;
+    @JsonProperty("name")
+    public String name() {
+        return name;
+    }
+
+    /**
+     * Returns the type value.
+     *
+     * @return the type value
+     */
+    @JsonProperty("type")
+    public NotificationChannelType type() {
+        return type;
+    }
+
+    /**
+     * Returns the config value.
+     *
+     * @return the config value
+     */
+    @JsonProperty("config")
+    public NotificationChannelConfig config() {
+        return config;
     }
 
     /**
@@ -70,18 +98,42 @@ public final class CreateNotificationChannelOperationRequest {
     @JsonPOJOBuilder(withPrefix = "")
     public static final class Builder {
 
-        private CreateNotificationChannelRequest body;
+        private String name;
+        private NotificationChannelType type;
+        private NotificationChannelConfig config;
 
         private Builder() {}
 
         /**
-         * Sets body.
+         * Sets name.
          *
-         * @param body The request body.
+         * @param name Identifier using only letters, numbers, underscores, and hyphens.
          * @return this builder
          */
-        public Builder body(CreateNotificationChannelRequest body) {
-            this.body = body;
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        /**
+         * Sets type.
+         *
+         * @param type the type value
+         * @return this builder
+         */
+        public Builder type(NotificationChannelType type) {
+            this.type = type;
+            return this;
+        }
+
+        /**
+         * Sets config.
+         *
+         * @param config the config value
+         * @return this builder
+         */
+        public Builder config(NotificationChannelConfig config) {
+            this.config = config;
             return this;
         }
 

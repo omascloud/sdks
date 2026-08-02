@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -34,11 +35,6 @@ import java.util.Set;
 @JsonDeserialize(builder = ListMetricsOperationRequest.Builder.class)
 public final class ListMetricsOperationRequest {
 
-
-
-
-
-
     private final Integer maxResults;
     private final String nextToken;
     private final String query;
@@ -52,50 +48,23 @@ public final class ListMetricsOperationRequest {
         if (builder.maxResults != null && new BigDecimal(builder.maxResults.toString()).compareTo(new BigDecimal("100")) > 0) {
             throw new IllegalArgumentException("maxResults must be at most 100");
         }
-
-
-
-
         this.maxResults = builder.maxResults;
-
-
-
         if (builder.nextToken != null && builder.nextToken.toString().length() > 4096) {
             throw new IllegalArgumentException("nextToken is too long");
         }
-
-
-
         this.nextToken = builder.nextToken;
-
-
-
         if (builder.query != null && builder.query.toString().length() > 255) {
             throw new IllegalArgumentException("query is too long");
         }
-
-
-
         this.query = builder.query;
-
-
-
-
         if (builder.dimensions != null && builder.dimensions.size() > 30) {
             throw new IllegalArgumentException("dimensions has too many items");
         }
-
         this.dimensions = builder.dimensions == null ? null : List.copyOf(builder.dimensions);
-
-
-
-
         if (builder.dimensionValues != null && builder.dimensionValues.size() > 100) {
             throw new IllegalArgumentException("dimensionValues has too many items");
         }
-
         this.dimensionValues = builder.dimensionValues == null ? null : List.copyOf(builder.dimensionValues);
-
     }
 
     /**
@@ -112,7 +81,7 @@ public final class ListMetricsOperationRequest {
      *
      * @return the maxResults value
      */
-    @JsonProperty("maxResults")
+    @JsonIgnore
     public Integer maxResults() {
         return maxResults;
     }
@@ -122,7 +91,7 @@ public final class ListMetricsOperationRequest {
      *
      * @return the nextToken value
      */
-    @JsonProperty("nextToken")
+    @JsonIgnore
     public String nextToken() {
         return nextToken;
     }
@@ -132,7 +101,7 @@ public final class ListMetricsOperationRequest {
      *
      * @return the query value
      */
-    @JsonProperty("query")
+    @JsonIgnore
     public String query() {
         return query;
     }
@@ -142,7 +111,7 @@ public final class ListMetricsOperationRequest {
      *
      * @return the dimensions value
      */
-    @JsonProperty("dimensions")
+    @JsonIgnore
     public List<String> dimensions() {
         return dimensions;
     }
@@ -152,7 +121,7 @@ public final class ListMetricsOperationRequest {
      *
      * @return the dimensionValues value
      */
-    @JsonProperty("dimensionValues")
+    @JsonIgnore
     public List<String> dimensionValues() {
         return dimensionValues;
     }

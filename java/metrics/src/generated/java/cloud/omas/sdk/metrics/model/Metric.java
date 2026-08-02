@@ -34,31 +34,19 @@ import java.util.Set;
 @JsonDeserialize(builder = Metric.Builder.class)
 public final class Metric {
 
-
-
     private final String name;
     private final List<String> dimensions;
 
     private Metric(Builder builder) {
         Objects.requireNonNull(builder.name, "name");
-
-
         if (builder.name != null && builder.name.toString().length() > 255) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_.-]+$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
-
-
-
         this.dimensions = builder.dimensions == null ? null : List.copyOf(builder.dimensions);
-
     }
 
     /**

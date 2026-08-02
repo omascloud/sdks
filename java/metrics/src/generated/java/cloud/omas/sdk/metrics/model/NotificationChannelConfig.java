@@ -33,24 +33,12 @@ import java.util.Set;
 @JsonDeserialize(builder = NotificationChannelConfig.Builder.class)
 public final class NotificationChannelConfig {
 
-
-
     private final WebhookConfig webhook;
     private final EmailConfig email;
 
     private NotificationChannelConfig(Builder builder) {
-
-
-
-
         this.webhook = builder.webhook;
-
-
-
-
-
         this.email = builder.email;
-
     }
 
     /**

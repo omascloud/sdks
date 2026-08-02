@@ -24,11 +24,8 @@ import java.util.Set;
  * Values for NotificationChannelType.
  */
 public enum NotificationChannelType {
-
     WEBHOOK("WEBHOOK"),
-
     EMAIL("EMAIL");
-
 
     private final String value;
 

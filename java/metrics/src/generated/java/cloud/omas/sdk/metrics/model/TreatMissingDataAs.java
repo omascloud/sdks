@@ -24,13 +24,9 @@ import java.util.Set;
  * Values for TreatMissingDataAs.
  */
 public enum TreatMissingDataAs {
-
     BREACHING("BREACHING"),
-
     NOT_BREACHING("NOT_BREACHING"),
-
     MISSING("MISSING");
-
 
     private final String value;
 

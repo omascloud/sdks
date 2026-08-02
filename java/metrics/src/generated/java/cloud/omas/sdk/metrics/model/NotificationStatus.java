@@ -24,11 +24,8 @@ import java.util.Set;
  * Values for NotificationStatus.
  */
 public enum NotificationStatus {
-
     OK("OK"),
-
     FAILED("FAILED");
-
 
     private final String value;
 

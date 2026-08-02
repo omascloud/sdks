@@ -8,13 +8,18 @@
 
 package cloud.omas.sdk.metrics.model;
 
-import cloud.omas.sdk.metrics.model.UpdateAlarmRequest;
+import cloud.omas.sdk.metrics.model.AlarmVariable;
+import cloud.omas.sdk.metrics.model.TreatMissingDataAs;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,33 +37,70 @@ import java.util.Set;
 @JsonDeserialize(builder = UpdateAlarmOperationRequest.Builder.class)
 public final class UpdateAlarmOperationRequest {
 
-
-
     private final String alarmName;
-    private final UpdateAlarmRequest body;
+    private final List<AlarmVariable> variables;
+    private final String expression;
+    private final Integer evaluationPeriodInMin;
+    private final Integer datapointsToAlarm;
+    private final Integer resolution;
+    private final TreatMissingDataAs treatMissingDataAs;
+    private final List<String> notificationChannels;
 
     private UpdateAlarmOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.alarmName, "alarmName");
-
-
         if (builder.alarmName != null && builder.alarmName.toString().length() > 255) {
             throw new IllegalArgumentException("alarmName is too long");
         }
-
         if (builder.alarmName != null && !builder.alarmName.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("alarmName has an invalid format");
         }
-
-
         this.alarmName = builder.alarmName;
-
-        Objects.requireNonNull(builder.body, "body");
-
-
-
-
-        this.body = builder.body;
-
+        Objects.requireNonNull(builder.variables, "variables");
+        if (builder.variables != null && builder.variables.size() < 1) {
+            throw new IllegalArgumentException("variables has too few items");
+        }
+        if (builder.variables != null && builder.variables.size() > 10) {
+            throw new IllegalArgumentException("variables has too many items");
+        }
+        this.variables = builder.variables == null ? null : List.copyOf(builder.variables);
+        Objects.requireNonNull(builder.expression, "expression");
+        if (builder.expression != null && builder.expression.toString().length() < 1) {
+            throw new IllegalArgumentException("expression is too short");
+        }
+        if (builder.expression != null && builder.expression.toString().length() > 1024) {
+            throw new IllegalArgumentException("expression is too long");
+        }
+        this.expression = builder.expression;
+        Objects.requireNonNull(builder.evaluationPeriodInMin, "evaluationPeriodInMin");
+        if (builder.evaluationPeriodInMin != null && new BigDecimal(builder.evaluationPeriodInMin.toString()).compareTo(new BigDecimal("1")) < 0) {
+            throw new IllegalArgumentException("evaluationPeriodInMin must be at least 1");
+        }
+        if (builder.evaluationPeriodInMin != null && new BigDecimal(builder.evaluationPeriodInMin.toString()).compareTo(new BigDecimal("1440")) > 0) {
+            throw new IllegalArgumentException("evaluationPeriodInMin must be at most 1440");
+        }
+        this.evaluationPeriodInMin = builder.evaluationPeriodInMin;
+        Objects.requireNonNull(builder.datapointsToAlarm, "datapointsToAlarm");
+        if (builder.datapointsToAlarm != null && new BigDecimal(builder.datapointsToAlarm.toString()).compareTo(new BigDecimal("1")) < 0) {
+            throw new IllegalArgumentException("datapointsToAlarm must be at least 1");
+        }
+        if (builder.datapointsToAlarm != null && new BigDecimal(builder.datapointsToAlarm.toString()).compareTo(new BigDecimal("1440")) > 0) {
+            throw new IllegalArgumentException("datapointsToAlarm must be at most 1440");
+        }
+        this.datapointsToAlarm = builder.datapointsToAlarm;
+        Objects.requireNonNull(builder.resolution, "resolution");
+        if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("1")) < 0) {
+            throw new IllegalArgumentException("resolution must be at least 1");
+        }
+        if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("3600")) > 0) {
+            throw new IllegalArgumentException("resolution must be at most 3600");
+        }
+        this.resolution = builder.resolution;
+        Objects.requireNonNull(builder.treatMissingDataAs, "treatMissingDataAs");
+        this.treatMissingDataAs = builder.treatMissingDataAs;
+        if (builder.notificationChannels != null && builder.notificationChannels.size() > 10) {
+            throw new IllegalArgumentException("notificationChannels has too many items");
+        }
+        this.notificationChannels = builder.notificationChannels == null ? null : List.copyOf(builder.notificationChannels);
     }
 
     /**
@@ -75,19 +117,79 @@ public final class UpdateAlarmOperationRequest {
      *
      * @return the alarmName value
      */
-    @JsonProperty("alarmName")
+    @JsonIgnore
     public String alarmName() {
         return alarmName;
     }
 
     /**
-     * The request body.
+     * List of metric variables that the alarm expression monitors.
      *
-     * @return the body value
+     * @return the variables value
      */
-    @JsonProperty("body")
-    public UpdateAlarmRequest body() {
-        return body;
+    @JsonProperty("variables")
+    public List<AlarmVariable> variables() {
+        return variables;
+    }
+
+    /**
+     * The threshold expression (e.g., &#39;A &gt; 90&#39;). Must use variable names defined in &#39;variables&#39;.
+     *
+     * @return the expression value
+     */
+    @JsonProperty("expression")
+    public String expression() {
+        return expression;
+    }
+
+    /**
+     * The duration in minutes over which the metric data is evaluated.
+     *
+     * @return the evaluationPeriodInMin value
+     */
+    @JsonProperty("evaluationPeriodInMin")
+    public Integer evaluationPeriodInMin() {
+        return evaluationPeriodInMin;
+    }
+
+    /**
+     * The number of consecutive data points that must breach the threshold to trigger the alarm.
+     *
+     * @return the datapointsToAlarm value
+     */
+    @JsonProperty("datapointsToAlarm")
+    public Integer datapointsToAlarm() {
+        return datapointsToAlarm;
+    }
+
+    /**
+     * Resolution in seconds.
+     *
+     * @return the resolution value
+     */
+    @JsonProperty("resolution")
+    public Integer resolution() {
+        return resolution;
+    }
+
+    /**
+     * Returns the treatMissingDataAs value.
+     *
+     * @return the treatMissingDataAs value
+     */
+    @JsonProperty("treatMissingDataAs")
+    public TreatMissingDataAs treatMissingDataAs() {
+        return treatMissingDataAs;
+    }
+
+    /**
+     * List of names of notification channels to alert when the alarm status changes.
+     *
+     * @return the notificationChannels value
+     */
+    @JsonProperty("notificationChannels")
+    public List<String> notificationChannels() {
+        return notificationChannels;
     }
 
     /**
@@ -97,7 +199,13 @@ public final class UpdateAlarmOperationRequest {
     public static final class Builder {
 
         private String alarmName;
-        private UpdateAlarmRequest body;
+        private List<AlarmVariable> variables;
+        private String expression;
+        private Integer evaluationPeriodInMin;
+        private Integer datapointsToAlarm;
+        private Integer resolution;
+        private TreatMissingDataAs treatMissingDataAs;
+        private List<String> notificationChannels;
 
         private Builder() {}
 
@@ -113,13 +221,79 @@ public final class UpdateAlarmOperationRequest {
         }
 
         /**
-         * Sets body.
+         * Sets variables.
          *
-         * @param body The request body.
+         * @param variables List of metric variables that the alarm expression monitors.
          * @return this builder
          */
-        public Builder body(UpdateAlarmRequest body) {
-            this.body = body;
+        public Builder variables(List<AlarmVariable> variables) {
+            this.variables = variables;
+            return this;
+        }
+
+        /**
+         * Sets expression.
+         *
+         * @param expression The threshold expression (e.g., &#39;A &gt; 90&#39;). Must use variable names defined in &#39;variables&#39;.
+         * @return this builder
+         */
+        public Builder expression(String expression) {
+            this.expression = expression;
+            return this;
+        }
+
+        /**
+         * Sets evaluationPeriodInMin.
+         *
+         * @param evaluationPeriodInMin The duration in minutes over which the metric data is evaluated.
+         * @return this builder
+         */
+        public Builder evaluationPeriodInMin(Integer evaluationPeriodInMin) {
+            this.evaluationPeriodInMin = evaluationPeriodInMin;
+            return this;
+        }
+
+        /**
+         * Sets datapointsToAlarm.
+         *
+         * @param datapointsToAlarm The number of consecutive data points that must breach the threshold to trigger the alarm.
+         * @return this builder
+         */
+        public Builder datapointsToAlarm(Integer datapointsToAlarm) {
+            this.datapointsToAlarm = datapointsToAlarm;
+            return this;
+        }
+
+        /**
+         * Sets resolution.
+         *
+         * @param resolution Resolution in seconds.
+         * @return this builder
+         */
+        public Builder resolution(Integer resolution) {
+            this.resolution = resolution;
+            return this;
+        }
+
+        /**
+         * Sets treatMissingDataAs.
+         *
+         * @param treatMissingDataAs the treatMissingDataAs value
+         * @return this builder
+         */
+        public Builder treatMissingDataAs(TreatMissingDataAs treatMissingDataAs) {
+            this.treatMissingDataAs = treatMissingDataAs;
+            return this;
+        }
+
+        /**
+         * Sets notificationChannels.
+         *
+         * @param notificationChannels List of names of notification channels to alert when the alarm status changes.
+         * @return this builder
+         */
+        public Builder notificationChannels(List<String> notificationChannels) {
+            this.notificationChannels = notificationChannels;
             return this;
         }
 

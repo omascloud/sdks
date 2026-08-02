@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -31,40 +32,26 @@ import java.util.Set;
 @JsonDeserialize(builder = DeleteDimensionOperationRequest.Builder.class)
 public final class DeleteDimensionOperationRequest {
 
-
-
     private final String metricName;
     private final String dimensionName;
 
     private DeleteDimensionOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.metricName, "metricName");
-
-
         if (builder.metricName != null && builder.metricName.toString().length() > 255) {
             throw new IllegalArgumentException("metricName is too long");
         }
-
         if (builder.metricName != null && !builder.metricName.toString().matches("^[A-Za-z0-9_.-]+$")) {
             throw new IllegalArgumentException("metricName has an invalid format");
         }
-
-
         this.metricName = builder.metricName;
-
         Objects.requireNonNull(builder.dimensionName, "dimensionName");
-
-
         if (builder.dimensionName != null && builder.dimensionName.toString().length() > 255) {
             throw new IllegalArgumentException("dimensionName is too long");
         }
-
         if (builder.dimensionName != null && !builder.dimensionName.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("dimensionName has an invalid format");
         }
-
-
         this.dimensionName = builder.dimensionName;
-
     }
 
     /**
@@ -81,7 +68,7 @@ public final class DeleteDimensionOperationRequest {
      *
      * @return the metricName value
      */
-    @JsonProperty("metricName")
+    @JsonIgnore
     public String metricName() {
         return metricName;
     }
@@ -91,7 +78,7 @@ public final class DeleteDimensionOperationRequest {
      *
      * @return the dimensionName value
      */
-    @JsonProperty("dimensionName")
+    @JsonIgnore
     public String dimensionName() {
         return dimensionName;
     }

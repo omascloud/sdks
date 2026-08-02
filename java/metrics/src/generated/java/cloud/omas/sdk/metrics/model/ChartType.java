@@ -24,11 +24,8 @@ import java.util.Set;
  * Values for ChartType.
  */
 public enum ChartType {
-
     LINE("LINE"),
-
     NUMBER("NUMBER");
-
 
     private final String value;
 

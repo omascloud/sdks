@@ -8,13 +8,14 @@
 
 package cloud.omas.sdk.metrics.model;
 
-import cloud.omas.sdk.metrics.model.UpdateNotificationChannelRequest;
+import cloud.omas.sdk.metrics.model.NotificationChannelConfig;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,33 +33,20 @@ import java.util.Set;
 @JsonDeserialize(builder = UpdateNotificationChannelOperationRequest.Builder.class)
 public final class UpdateNotificationChannelOperationRequest {
 
-
-
     private final String channelName;
-    private final UpdateNotificationChannelRequest body;
+    private final NotificationChannelConfig config;
 
     private UpdateNotificationChannelOperationRequest(Builder builder) {
         Objects.requireNonNull(builder.channelName, "channelName");
-
-
         if (builder.channelName != null && builder.channelName.toString().length() > 255) {
             throw new IllegalArgumentException("channelName is too long");
         }
-
         if (builder.channelName != null && !builder.channelName.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("channelName has an invalid format");
         }
-
-
         this.channelName = builder.channelName;
-
-        Objects.requireNonNull(builder.body, "body");
-
-
-
-
-        this.body = builder.body;
-
+        Objects.requireNonNull(builder.config, "config");
+        this.config = builder.config;
     }
 
     /**
@@ -75,19 +63,19 @@ public final class UpdateNotificationChannelOperationRequest {
      *
      * @return the channelName value
      */
-    @JsonProperty("channelName")
+    @JsonIgnore
     public String channelName() {
         return channelName;
     }
 
     /**
-     * The request body.
+     * Returns the config value.
      *
-     * @return the body value
+     * @return the config value
      */
-    @JsonProperty("body")
-    public UpdateNotificationChannelRequest body() {
-        return body;
+    @JsonProperty("config")
+    public NotificationChannelConfig config() {
+        return config;
     }
 
     /**
@@ -97,7 +85,7 @@ public final class UpdateNotificationChannelOperationRequest {
     public static final class Builder {
 
         private String channelName;
-        private UpdateNotificationChannelRequest body;
+        private NotificationChannelConfig config;
 
         private Builder() {}
 
@@ -113,13 +101,13 @@ public final class UpdateNotificationChannelOperationRequest {
         }
 
         /**
-         * Sets body.
+         * Sets config.
          *
-         * @param body The request body.
+         * @param config the config value
          * @return this builder
          */
-        public Builder body(UpdateNotificationChannelRequest body) {
-            this.body = body;
+        public Builder config(NotificationChannelConfig config) {
+            this.config = config;
             return this;
         }
 

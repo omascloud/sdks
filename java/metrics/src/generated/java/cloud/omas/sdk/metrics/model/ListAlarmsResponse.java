@@ -36,41 +36,18 @@ import java.util.Set;
 @JsonDeserialize(builder = ListAlarmsResponse.Builder.class)
 public final class ListAlarmsResponse {
 
-
-
-
-
     private final List<AlarmSummary> alarms;
     private final String nextToken;
     private final Long totalCount;
     private final AlarmStatusCounts statusCounts;
 
     private ListAlarmsResponse(Builder builder) {
-
-
-
         this.alarms = builder.alarms == null ? null : List.copyOf(builder.alarms);
-
-
-
-
-
         this.nextToken = builder.nextToken;
-
         Objects.requireNonNull(builder.totalCount, "totalCount");
-
-
-
-
         this.totalCount = builder.totalCount;
-
         Objects.requireNonNull(builder.statusCounts, "statusCounts");
-
-
-
-
         this.statusCounts = builder.statusCounts;
-
     }
 
     /**

@@ -38,14 +38,6 @@ import java.util.Set;
 @JsonDeserialize(builder = ChartVariable.Builder.class)
 public final class ChartVariable {
 
-
-
-
-
-
-
-
-
     private final String name;
     private final String displayName;
     private final Boolean visible;
@@ -57,93 +49,46 @@ public final class ChartVariable {
 
     private ChartVariable(Builder builder) {
         Objects.requireNonNull(builder.name, "name");
-
-
         if (builder.name != null && builder.name.toString().length() > 64) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z_][A-Za-z0-9_]*$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
-
-
         if (builder.displayName != null && builder.displayName.toString().length() > 128) {
             throw new IllegalArgumentException("displayName is too long");
         }
-
-
-
         this.displayName = builder.displayName;
-
         Objects.requireNonNull(builder.visible, "visible");
-
-
-
-
         this.visible = builder.visible;
-
         Objects.requireNonNull(builder.type, "type");
-
-
-
-
         this.type = builder.type;
-
-
-
         if (builder.metricName != null && builder.metricName.toString().length() > 255) {
             throw new IllegalArgumentException("metricName is too long");
         }
-
         if (builder.metricName != null && !builder.metricName.toString().matches("^[A-Za-z0-9_.-]+$")) {
             throw new IllegalArgumentException("metricName has an invalid format");
         }
-
-
         this.metricName = builder.metricName;
-
-
         if (builder.aggregation != null && builder.aggregation.toString().length() < 3) {
             throw new IllegalArgumentException("aggregation is too short");
         }
-
-
         if (builder.aggregation != null && builder.aggregation.toString().length() > 128) {
             throw new IllegalArgumentException("aggregation is too long");
         }
-
-
-
         this.aggregation = builder.aggregation;
-
-
-
-
         if (builder.filters != null && builder.filters.size() > 30) {
             throw new IllegalArgumentException("filters has too many items");
         }
-
         this.filters = builder.filters == null ? null : List.copyOf(builder.filters);
-
-
         if (builder.expression != null && builder.expression.toString().length() < 1) {
             throw new IllegalArgumentException("expression is too short");
         }
-
-
         if (builder.expression != null && builder.expression.toString().length() > 1024) {
             throw new IllegalArgumentException("expression is too long");
         }
-
-
-
         this.expression = builder.expression;
-
     }
 
     /**

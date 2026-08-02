@@ -38,16 +38,6 @@ import java.util.Set;
 @JsonDeserialize(builder = Alarm.Builder.class)
 public final class Alarm {
 
-
-
-
-
-
-
-
-
-
-
     private final String name;
     private final List<AlarmVariable> variables;
     private final String expression;
@@ -60,77 +50,28 @@ public final class Alarm {
     private final List<String> notificationChannels;
 
     private Alarm(Builder builder) {
-
-
         if (builder.name != null && builder.name.toString().length() > 255) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
-
-
-
         this.variables = builder.variables == null ? null : List.copyOf(builder.variables);
-
-
-
-
-
         this.expression = builder.expression;
-
-
-
-
-
         this.evaluationPeriodInMin = builder.evaluationPeriodInMin;
-
-
-
-
-
         this.datapointsToAlarm = builder.datapointsToAlarm;
-
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("resolution must be at least 1");
         }
         if (builder.resolution != null && new BigDecimal(builder.resolution.toString()).compareTo(new BigDecimal("3600")) > 0) {
             throw new IllegalArgumentException("resolution must be at most 3600");
         }
-
-
-
-
         this.resolution = builder.resolution;
-
-
-
-
-
         this.treatMissingDataAs = builder.treatMissingDataAs;
-
-
-
-
-
         this.status = builder.status;
-
-
-
-
-
         this.notificationStatus = builder.notificationStatus;
-
-
-
-
         this.notificationChannels = builder.notificationChannels == null ? null : List.copyOf(builder.notificationChannels);
-
     }
 
     /**

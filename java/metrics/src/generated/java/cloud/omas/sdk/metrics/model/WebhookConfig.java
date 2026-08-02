@@ -34,32 +34,19 @@ import java.util.Set;
 @JsonDeserialize(builder = WebhookConfig.Builder.class)
 public final class WebhookConfig {
 
-
-
     private final URI url;
     private final Map<String, String> headers;
 
     private WebhookConfig(Builder builder) {
         Objects.requireNonNull(builder.url, "url");
-
         if (builder.url != null && builder.url.toString().length() < 1) {
             throw new IllegalArgumentException("url is too short");
         }
-
-
         if (builder.url != null && builder.url.toString().length() > 2048) {
             throw new IllegalArgumentException("url is too long");
         }
-
-
-
         this.url = builder.url;
-
-
-
-
         this.headers = builder.headers == null ? null : Map.copyOf(builder.headers);
-
     }
 
     /**

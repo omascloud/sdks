@@ -33,42 +33,23 @@ import java.util.Set;
 @JsonDeserialize(builder = CreateNotificationChannelRequest.Builder.class)
 public final class CreateNotificationChannelRequest {
 
-
-
-
     private final String name;
     private final NotificationChannelType type;
     private final NotificationChannelConfig config;
 
     private CreateNotificationChannelRequest(Builder builder) {
         Objects.requireNonNull(builder.name, "name");
-
-
         if (builder.name != null && builder.name.toString().length() > 255) {
             throw new IllegalArgumentException("name is too long");
         }
-
         if (builder.name != null && !builder.name.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("name has an invalid format");
         }
-
-
         this.name = builder.name;
-
         Objects.requireNonNull(builder.type, "type");
-
-
-
-
         this.type = builder.type;
-
         Objects.requireNonNull(builder.config, "config");
-
-
-
-
         this.config = builder.config;
-
     }
 
     /**

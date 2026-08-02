@@ -31,14 +31,11 @@ import java.util.Set;
 @JsonDeserialize(builder = ChartVariableOneOf1.Builder.class)
 public final class ChartVariableOneOf1 {
 
-
     /**
      * Allowed values for type.
      */
     public enum TypeEnum {
-
         EXPRESSION("EXPRESSION");
-
 
         private final String value;
 
@@ -74,16 +71,10 @@ public final class ChartVariableOneOf1 {
         }
     }
 
-
     private final TypeEnum type;
 
     private ChartVariableOneOf1(Builder builder) {
-
-
-
-
         this.type = builder.type;
-
     }
 
     /**

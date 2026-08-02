@@ -31,20 +31,14 @@ import java.util.Set;
 @JsonDeserialize(builder = VerifyNotificationChannelRequest.Builder.class)
 public final class VerifyNotificationChannelRequest {
 
-
     private final String code;
 
     private VerifyNotificationChannelRequest(Builder builder) {
         Objects.requireNonNull(builder.code, "code");
-
-
         if (builder.code != null && !builder.code.toString().matches("^[0-9]{6}$")) {
             throw new IllegalArgumentException("code has an invalid format");
         }
-
-
         this.code = builder.code;
-
     }
 
     /**

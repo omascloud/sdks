@@ -37,16 +37,6 @@ import java.util.Set;
 @JsonDeserialize(builder = ChartConfig.Builder.class)
 public final class ChartConfig {
 
-
-
-
-
-
-
-
-
-
-
     private final String id;
     private final String title;
     private final ChartType chartType;
@@ -60,111 +50,58 @@ public final class ChartConfig {
 
     private ChartConfig(Builder builder) {
         Objects.requireNonNull(builder.id, "id");
-
-
         if (builder.id != null && builder.id.toString().length() > 64) {
             throw new IllegalArgumentException("id is too long");
         }
-
         if (builder.id != null && !builder.id.toString().matches("^[A-Za-z0-9_-]+$")) {
             throw new IllegalArgumentException("id has an invalid format");
         }
-
-
         this.id = builder.id;
-
         Objects.requireNonNull(builder.title, "title");
-
-
         if (builder.title != null && builder.title.toString().length() > 255) {
             throw new IllegalArgumentException("title is too long");
         }
-
-
-
         this.title = builder.title;
-
-
-
-
-
         this.chartType = builder.chartType;
-
-
-
         if (builder.unit != null && builder.unit.toString().length() > 32) {
             throw new IllegalArgumentException("unit is too long");
         }
-
-
-
         this.unit = builder.unit;
-
         if (builder.row != null && new BigDecimal(builder.row.toString()).compareTo(new BigDecimal("0")) < 0) {
             throw new IllegalArgumentException("row must be at least 0");
         }
         if (builder.row != null && new BigDecimal(builder.row.toString()).compareTo(new BigDecimal("3599")) > 0) {
             throw new IllegalArgumentException("row must be at most 3599");
         }
-
-
-
-
         this.row = builder.row;
-
         if (builder.column != null && new BigDecimal(builder.column.toString()).compareTo(new BigDecimal("0")) < 0) {
             throw new IllegalArgumentException("column must be at least 0");
         }
         if (builder.column != null && new BigDecimal(builder.column.toString()).compareTo(new BigDecimal("23")) > 0) {
             throw new IllegalArgumentException("column must be at most 23");
         }
-
-
-
-
         this.column = builder.column;
-
         if (builder.colSpan != null && new BigDecimal(builder.colSpan.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("colSpan must be at least 1");
         }
         if (builder.colSpan != null && new BigDecimal(builder.colSpan.toString()).compareTo(new BigDecimal("24")) > 0) {
             throw new IllegalArgumentException("colSpan must be at most 24");
         }
-
-
-
-
         this.colSpan = builder.colSpan;
-
         if (builder.rowSpan != null && new BigDecimal(builder.rowSpan.toString()).compareTo(new BigDecimal("1")) < 0) {
             throw new IllegalArgumentException("rowSpan must be at least 1");
         }
         if (builder.rowSpan != null && new BigDecimal(builder.rowSpan.toString()).compareTo(new BigDecimal("36")) > 0) {
             throw new IllegalArgumentException("rowSpan must be at most 36");
         }
-
-
-
-
         this.rowSpan = builder.rowSpan;
-
         Objects.requireNonNull(builder.variables, "variables");
-
-
-
         if (builder.variables != null && builder.variables.size() > 20) {
             throw new IllegalArgumentException("variables has too many items");
         }
-
         this.variables = builder.variables == null ? null : List.copyOf(builder.variables);
-
         Objects.requireNonNull(builder.timeRange, "timeRange");
-
-
-
-
         this.timeRange = builder.timeRange;
-
     }
 
     /**

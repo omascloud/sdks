@@ -6,7 +6,7 @@
 
     <groupId>cloud.omas.sdk</groupId>
     <artifactId>sdk-parent</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>pom</packaging>
 
     <name>Omas Cloud Java SDK Parent</name>

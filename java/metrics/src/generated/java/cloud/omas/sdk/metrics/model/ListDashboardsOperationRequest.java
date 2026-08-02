@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -31,8 +32,6 @@ import java.util.Set;
 @JsonDeserialize(builder = ListDashboardsOperationRequest.Builder.class)
 public final class ListDashboardsOperationRequest {
 
-
-
     private final Integer maxResults;
     private final String nextToken;
 
@@ -43,22 +42,11 @@ public final class ListDashboardsOperationRequest {
         if (builder.maxResults != null && new BigDecimal(builder.maxResults.toString()).compareTo(new BigDecimal("100")) > 0) {
             throw new IllegalArgumentException("maxResults must be at most 100");
         }
-
-
-
-
         this.maxResults = builder.maxResults;
-
-
-
         if (builder.nextToken != null && builder.nextToken.toString().length() > 4096) {
             throw new IllegalArgumentException("nextToken is too long");
         }
-
-
-
         this.nextToken = builder.nextToken;
-
     }
 
     /**
@@ -75,7 +63,7 @@ public final class ListDashboardsOperationRequest {
      *
      * @return the maxResults value
      */
-    @JsonProperty("maxResults")
+    @JsonIgnore
     public Integer maxResults() {
         return maxResults;
     }
@@ -85,7 +73,7 @@ public final class ListDashboardsOperationRequest {
      *
      * @return the nextToken value
      */
-    @JsonProperty("nextToken")
+    @JsonIgnore
     public String nextToken() {
         return nextToken;
     }

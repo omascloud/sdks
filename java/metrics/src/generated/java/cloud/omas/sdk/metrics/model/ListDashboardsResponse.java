@@ -35,23 +35,12 @@ import java.util.Set;
 @JsonDeserialize(builder = ListDashboardsResponse.Builder.class)
 public final class ListDashboardsResponse {
 
-
-
     private final List<DashboardSummary> dashboards;
     private final String nextToken;
 
     private ListDashboardsResponse(Builder builder) {
-
-
-
         this.dashboards = builder.dashboards == null ? null : List.copyOf(builder.dashboards);
-
-
-
-
-
         this.nextToken = builder.nextToken;
-
     }
 
     /**

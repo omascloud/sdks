@@ -35,23 +35,12 @@ import java.util.Set;
 @JsonDeserialize(builder = ListNotificationChannelsResponse.Builder.class)
 public final class ListNotificationChannelsResponse {
 
-
-
     private final List<NotificationChannel> channels;
     private final String nextToken;
 
     private ListNotificationChannelsResponse(Builder builder) {
-
-
-
         this.channels = builder.channels == null ? null : List.copyOf(builder.channels);
-
-
-
-
-
         this.nextToken = builder.nextToken;
-
     }
 
     /**

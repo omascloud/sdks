@@ -13,11 +13,14 @@ import cloud.omas.sdk.core.http.SdkHttpRequest;
 import cloud.omas.sdk.core.http.SdkHttpResponse;
 import cloud.omas.sdk.metrics.exception.ApiExceptions;
 import cloud.omas.sdk.metrics.exception.ResourceNotFoundException;
+import cloud.omas.sdk.metrics.model.DataPoint;
 import cloud.omas.sdk.metrics.model.GetDimensionValuesOperationRequest;
 import cloud.omas.sdk.metrics.model.ListMetricsOperationRequest;
 import cloud.omas.sdk.metrics.model.ListMetricsResponse;
+import cloud.omas.sdk.metrics.model.PutMetricDataOperationRequest;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +84,37 @@ public class MetricsClientTest {
     public void testValidatesMaximumResults() {
         expectThrows(IllegalArgumentException.class, () -> ListMetricsOperationRequest.builder()
                 .maxResults(101)
+                .build());
+    }
+
+    @Test
+    public void testRoutesFlatOperationRequestFieldsToPathAndBody() {
+        RecordingTransport transport = new RecordingTransport(new SdkHttpResponse(
+                202, Map.of(), new byte[0]));
+        MetricsClient client = MetricsClient.builder()
+                .authProvider(new BearerAuthProvider("token"))
+                .transport(transport)
+                .build();
+
+        client.putMetricData(PutMetricDataOperationRequest.builder()
+                .metricName("cpu_usage")
+                .entries(List.of(DataPoint.builder()
+                        .timestamp(123L)
+                        .value(new BigDecimal("85.5"))
+                        .build()))
+                .build());
+
+        assertEquals(transport.request.uri().toString(),
+                "https://api.omas.cloud/v1/metrics/cpu_usage");
+        assertEquals(transport.request.headers().values().get("Content-Type"), "application/json");
+        assertEquals(new String(transport.request.body(), StandardCharsets.UTF_8),
+                "{\"entries\":[{\"timestamp\":123,\"value\":85.5}]}");
+    }
+
+    @Test
+    public void testRequiresFlattenedBodyFields() {
+        expectThrows(NullPointerException.class, () -> PutMetricDataOperationRequest.builder()
+                .metricName("cpu")
                 .build());
     }
 

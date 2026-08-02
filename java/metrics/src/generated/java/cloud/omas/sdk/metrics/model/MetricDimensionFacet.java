@@ -35,38 +35,20 @@ import java.util.Set;
 @JsonDeserialize(builder = MetricDimensionFacet.Builder.class)
 public final class MetricDimensionFacet {
 
-
-
-
     private final String name;
     private final Long count;
     private final List<MetricDimensionValueFacet> values;
 
     private MetricDimensionFacet(Builder builder) {
         Objects.requireNonNull(builder.name, "name");
-
-
         if (builder.name != null && builder.name.toString().length() > 255) {
             throw new IllegalArgumentException("name is too long");
         }
-
-
-
         this.name = builder.name;
-
         Objects.requireNonNull(builder.count, "count");
-
-
-
-
         this.count = builder.count;
-
         Objects.requireNonNull(builder.values, "values");
-
-
-
         this.values = builder.values == null ? null : List.copyOf(builder.values);
-
     }
 
     /**
