@@ -1,0 +1,3743 @@
+openapi: 3.0.3
+info:
+  title: Metrics API
+  version: 1.0.0
+servers:
+- url: https://api.omas.cloud/
+paths:
+  /v1/metrics:
+    get:
+      summary: List all metrics
+      description: Retrieves a list of all available metrics that have been recorded.
+      operationId: listMetrics
+      parameters:
+      - name: maxResults
+        in: query
+        description: The maximum number of metrics to return in a single response
+          page.
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          example: 25
+      - name: nextToken
+        in: query
+        description: Pagination token to retrieve the next page of metrics for the
+          same filters.
+        schema:
+          maxLength: 4096
+          type: string
+          example: eyJwYWdlIjoyfQ==
+      - name: query
+        in: query
+        description: Case-insensitive text contained in the metric name.
+        schema:
+          maxLength: 255
+          type: string
+      - name: dimensions
+        in: query
+        description: Dimension names that every returned metric must expose.
+        style: form
+        explode: true
+        schema:
+          maxItems: 30
+          type: array
+          items:
+            maxLength: 255
+            pattern: "^[A-Za-z0-9_-]+$"
+            type: string
+      - name: dimensionValues
+        in: query
+        description: "Dimension values to match, formatted as 'name:value'. Multiple\
+          \ values for one name are ORed; different names are ANDed."
+        style: form
+        explode: true
+        schema:
+          maxItems: 100
+          type: array
+          items:
+            maxLength: 1280
+            pattern: "^[A-Za-z0-9_-]{1,255}:.{1,1024}$"
+            type: string
+      responses:
+        "200":
+          description: A page of available metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListMetricsResponse"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListMetrics401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListMetrics403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidPaginationTokenException"
+      security:
+      - bearerAuth: []
+  /v1/metrics/{metricName}:
+    get:
+      summary: Get metrics data
+      description: "Retrieves time-series data points for a specific metric, filtered\
+        \ by time range, resolution, and dimensions."
+      operationId: getMetricData
+      parameters:
+      - name: metricName
+        in: path
+        description: The unique name of the metric to retrieve data for.
+        required: true
+        schema:
+          $ref: "#/components/schemas/MetricName"
+      - name: resolution
+        in: query
+        description: "The granularity of the returned data points, in seconds. Must\
+          \ be a multiple of the metric's original resolution."
+        schema:
+          $ref: "#/components/schemas/Resolution"
+      - name: aggregation
+        in: query
+        description: The aggregation expression to apply to the data points within
+          each resolution bucket.
+        schema:
+          $ref: "#/components/schemas/Aggregation"
+      - name: startTimestamp
+        in: query
+        description: "The beginning of the time range to query, in milliseconds since\
+          \ Unix epoch."
+        required: true
+        schema:
+          type: integer
+          format: int64
+          example: 1672531200000
+      - name: endTimestamp
+        in: query
+        description: "The end of the time range to query, in milliseconds since Unix\
+          \ epoch. Defaults to the current time if not specified."
+        schema:
+          type: integer
+          format: int64
+          example: 1672534800000
+      - name: maxResults
+        in: query
+        description: The maximum number of data points to return in a single response
+          page.
+        schema:
+          maximum: 10000
+          minimum: 1
+          type: integer
+          example: 100
+      - name: includeDimensions
+        in: query
+        description: Filter data points by these dimensions. Format each item as 'name:value'.
+          Filters that match no data return an empty result.
+        style: form
+        explode: true
+        schema:
+          maxItems: 30
+          type: array
+          example:
+          - host:server-1
+          - region:us-east-1
+          items:
+            maxLength: 1280
+            pattern: "^[A-Za-z0-9_-]{1,255}:.{1,1024}$"
+            type: string
+      - name: excludeDimensions
+        in: query
+        description: Exclude data points that match these dimensions. Format each
+          item as 'name:value'. Filters that match no data return an empty result.
+        style: form
+        explode: true
+        schema:
+          maxItems: 30
+          type: array
+          example:
+          - host:backup-server
+          items:
+            maxLength: 1280
+            pattern: "^[A-Za-z0-9_-]{1,255}:.{1,1024}$"
+            type: string
+      - name: nextToken
+        in: query
+        description: Pagination token to retrieve the next page of results if the
+          current result set is truncated.
+        schema:
+          maxLength: 1024
+          type: string
+          example: eyJwYWdlIjoyfQ==
+      responses:
+        "200":
+          description: A page of metric data points
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetMetricDataResponse"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetMetricData401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetMetricData403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetMetricData400ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceDeletionInProgressException"
+      security:
+      - bearerAuth: []
+    post:
+      summary: Submit metrics data
+      description: Publishes data points for a specific metric. Data points can include
+        dimensions and values.
+      operationId: putMetricData
+      parameters:
+      - name: metricName
+        in: path
+        description: Metric name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/MetricName"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutMetricDataRequest"
+        required: true
+      responses:
+        "202":
+          description: Metrics data accepted
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PutMetricData401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PutMetricData403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PutMetricData400ErrorResponse"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceUpdatedConcurrentlyException"
+      security:
+      - bearerAuth: []
+    delete:
+      summary: Delete metric
+      description: Deletes all data associated with a specific metric.
+      operationId: deleteMetric
+      parameters:
+      - name: metricName
+        in: path
+        description: Metric name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/MetricName"
+      responses:
+        "204":
+          description: Metric deleted
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteMetric401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteMetric403ErrorResponse"
+      security:
+      - bearerAuth: []
+  /v1/metrics/{metricName}/dimensions/{dimensionName}:
+    delete:
+      summary: Delete dimension metadata from a metric
+      description: "Removes a specific dimension from the metadata of a metric. Note\
+        \ that this doesn't necessarily delete the data points associated with this\
+        \ dimension immediately, but it removes it from the list of dimensions for\
+        \ the metric."
+      operationId: deleteDimension
+      parameters:
+      - name: metricName
+        in: path
+        description: Metric name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/MetricName"
+      - name: dimensionName
+        in: path
+        description: Dimension name.
+        required: true
+        schema:
+          maxLength: 255
+          pattern: "^[A-Za-z0-9_-]+$"
+          type: string
+      responses:
+        "204":
+          description: Dimension metadata deleted
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteDimension401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteDimension403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceUpdatedConcurrentlyException"
+      security:
+      - bearerAuth: []
+  /v1/metrics/{metricName}/dimensions/{dimensionName}/values:
+    get:
+      summary: Get available values for a dimension
+      description: Retrieves all unique values recorded for a specific dimension of
+        a metric.
+      operationId: getDimensionValues
+      parameters:
+      - name: metricName
+        in: path
+        description: Metric name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/MetricName"
+      - name: dimensionName
+        in: path
+        description: Dimension name.
+        required: true
+        schema:
+          maxLength: 255
+          pattern: "^[A-Za-z0-9_-]+$"
+          type: string
+      responses:
+        "200":
+          description: List of dimension values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDimensionValuesResponse"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDimensionValues401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDimensionValues403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+      security:
+      - bearerAuth: []
+  /v1/dashboards:
+    get:
+      summary: List all dashboards for the authenticated user
+      description: Retrieves a list of all dashboards created by the currently authenticated
+        user.
+      operationId: listDashboards
+      parameters:
+      - name: maxResults
+        in: query
+        description: The maximum number of dashboards to return in a single response
+          page.
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          example: 20
+      - name: nextToken
+        in: query
+        description: Pagination token to retrieve the next page of dashboards if the
+          current result set is truncated.
+        schema:
+          maxLength: 4096
+          type: string
+          example: eyJwYWdlIjoyfQ==
+      responses:
+        "200":
+          description: List of dashboards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDashboardsResponse"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDashboards401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDashboards403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidPaginationTokenException"
+      security:
+      - bearerAuth: []
+    post:
+      summary: Create a new dashboard
+      description: Creates a new dashboard with a specified configuration of charts
+        and variables.
+      operationId: createDashboard
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDashboardRequest"
+        required: true
+      responses:
+        "201":
+          description: Dashboard created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateDashboard401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateDashboard403ErrorResponse"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceLimitExceededException"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardRefreshIntervalRequiredException"
+      security:
+      - bearerAuth: []
+  /v1/dashboards/{dashboardId}/embed:
+    post:
+      summary: Generate public iframe embed code for a dashboard
+      description: Generates a signed URL or token that allows a dashboard to be embedded
+        in an external website via an iframe.
+      operationId: createDashboardEmbed
+      parameters:
+      - name: dashboardId
+        in: path
+        description: Dashboard identifier.
+        required: true
+        schema:
+          $ref: "#/components/schemas/EntityId"
+      responses:
+        "201":
+          description: Dashboard embed token created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateDashboardEmbedResponse"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateDashboardEmbed401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateDashboardEmbed403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+      security:
+      - bearerAuth: []
+  /v1/dashboards/{dashboardId}:
+    get:
+      summary: Get a dashboard by id
+      description: Retrieves the full configuration and metadata of a specific dashboard
+        by its ID.
+      operationId: getDashboard
+      parameters:
+      - name: dashboardId
+        in: path
+        description: Dashboard identifier.
+        required: true
+        schema:
+          $ref: "#/components/schemas/EntityId"
+      responses:
+        "200":
+          description: Dashboard details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDashboard401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDashboard403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+      security:
+      - bearerAuth: []
+    put:
+      summary: Update a dashboard
+      description: "Updates the configuration (charts, variables, name) of an existing\
+        \ dashboard."
+      operationId: updateDashboard
+      parameters:
+      - name: dashboardId
+        in: path
+        description: Dashboard identifier.
+        required: true
+        schema:
+          $ref: "#/components/schemas/EntityId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDashboardRequest"
+        required: true
+      responses:
+        "200":
+          description: Dashboard updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateDashboard401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateDashboard403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceUpdatedConcurrentlyException"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateDashboard400ErrorResponse"
+      security:
+      - bearerAuth: []
+    delete:
+      summary: Delete a dashboard
+      description: Permanently deletes a dashboard.
+      operationId: deleteDashboard
+      parameters:
+      - name: dashboardId
+        in: path
+        description: Dashboard identifier.
+        required: true
+        schema:
+          $ref: "#/components/schemas/EntityId"
+      responses:
+        "204":
+          description: Dashboard deleted
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteDashboard401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteDashboard403ErrorResponse"
+      security:
+      - bearerAuth: []
+  /v1/alarms:
+    get:
+      summary: List all alarms
+      description: Retrieves a list of all alarms configured for the authenticated
+        account.
+      operationId: listAlarms
+      parameters:
+      - name: maxResults
+        in: query
+        description: The maximum number of alarms to return in a single response page.
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          example: 20
+      - name: nextToken
+        in: query
+        description: Pagination token to retrieve the next page of alarms if the current
+          result set is truncated.
+        schema:
+          maxLength: 4096
+          type: string
+          example: eyJwYWdlIjoyfQ==
+      - name: query
+        in: query
+        description: Case-insensitive text contained in the alarm name.
+        schema:
+          maxLength: 255
+          type: string
+      - name: statuses
+        in: query
+        description: The alarm statuses to return. Missing or empty selects all statuses.
+        style: form
+        explode: true
+        schema:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/AlarmStatus"
+      responses:
+        "200":
+          description: List of alarms
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAlarmsResponse"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAlarms401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAlarms403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidPaginationTokenException"
+      security:
+      - bearerAuth: []
+  /v1/alarms/{alarmName}/history:
+    get:
+      summary: List alarm history
+      description: "Retrieves status transition history for a specific alarm, ordered\
+        \ from newest to oldest."
+      operationId: listAlarmHistory
+      parameters:
+      - name: alarmName
+        in: path
+        description: Alarm name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      - name: maxResults
+        in: query
+        description: The maximum number of history entries to return in a single response
+          page.
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          example: 20
+      - name: nextToken
+        in: query
+        description: Pagination token to retrieve the next page of older alarm history
+          entries if the current result set is truncated.
+        schema:
+          maxLength: 4096
+          type: string
+          example: eyJwYWdlIjoyfQ==
+      responses:
+        "200":
+          description: Alarm history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAlarmHistoryResponse"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAlarmHistory401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAlarmHistory403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidPaginationTokenException"
+      security:
+      - bearerAuth: []
+  /v1/alarms/{alarmName}:
+    get:
+      summary: Get an alarm
+      description: Retrieves the details and current status of a specific alarm by
+        its name.
+      operationId: getAlarm
+      parameters:
+      - name: alarmName
+        in: path
+        description: Alarm name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      responses:
+        "200":
+          description: Alarm details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alarm"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAlarm401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAlarm403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+      security:
+      - bearerAuth: []
+    put:
+      summary: Update an alarm
+      description: Updates the configuration of an existing alarm.
+      operationId: updateAlarm
+      parameters:
+      - name: alarmName
+        in: path
+        description: Alarm name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAlarmRequest"
+        required: true
+      responses:
+        "200":
+          description: Alarm updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alarm"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateAlarm401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateAlarm403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateAlarm400ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceUpdatedConcurrentlyException"
+      security:
+      - bearerAuth: []
+    post:
+      summary: Create an alarm
+      description: Creates a new alarm that monitors a metric and triggers notifications
+        when thresholds are met.
+      operationId: createAlarm
+      parameters:
+      - name: alarmName
+        in: path
+        description: Alarm name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAlarmRequest"
+        required: true
+      responses:
+        "201":
+          description: Alarm created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alarm"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAlarm401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAlarm403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAlarm400ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+      security:
+      - bearerAuth: []
+    delete:
+      summary: Delete an alarm
+      description: Permanently deletes an alarm.
+      operationId: deleteAlarm
+      parameters:
+      - name: alarmName
+        in: path
+        description: Alarm name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      responses:
+        "204":
+          description: Alarm deleted
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteAlarm401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteAlarm403ErrorResponse"
+      security:
+      - bearerAuth: []
+  /v1/notification-channels:
+    get:
+      summary: List all notification channels for the authenticated user
+      description: "Retrieves a list of all notification channels (e.g., email, webhooks)\
+        \ configured for the authenticated account."
+      operationId: listNotificationChannels
+      parameters:
+      - name: maxResults
+        in: query
+        description: The maximum number of notification channels to return in a single
+          response page.
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          example: 20
+      - name: nextToken
+        in: query
+        description: Pagination token to retrieve the next page of notification channels
+          if the current result set is truncated.
+        schema:
+          maxLength: 4096
+          type: string
+          example: eyJwYWdlIjoyfQ==
+      responses:
+        "200":
+          description: List of notification channels
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListNotificationChannelsResponse"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListNotificationChannels401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListNotificationChannels403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidPaginationTokenException"
+      security:
+      - bearerAuth: []
+    post:
+      summary: Create a new notification channel
+      description: Creates a new notification channel to receive alarm alerts. Some
+        channel types may require verification.
+      operationId: createNotificationChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotificationChannelRequest"
+        required: true
+      responses:
+        "201":
+          description: Notification channel created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateNotificationChannel401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateNotificationChannel403ErrorResponse"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateNotificationChannel400ErrorResponse"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceLimitExceededException"
+      security:
+      - bearerAuth: []
+  /v1/notification-channels/{channelName}:
+    get:
+      summary: Get a notification channel by name
+      description: Retrieves the details and current verification status of a specific
+        notification channel by its name.
+      operationId: getNotificationChannel
+      parameters:
+      - name: channelName
+        in: path
+        description: Notification channel name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      responses:
+        "200":
+          description: Notification channel details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetNotificationChannel401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetNotificationChannel403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+      security:
+      - bearerAuth: []
+    put:
+      summary: Update a notification channel
+      description: Updates the configuration of an existing notification channel.
+      operationId: updateNotificationChannel
+      parameters:
+      - name: channelName
+        in: path
+        description: Notification channel name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationChannelRequest"
+        required: true
+      responses:
+        "200":
+          description: Notification channel updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateNotificationChannel401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateNotificationChannel403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateNotificationChannel400ErrorResponse"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceUpdatedConcurrentlyException"
+      security:
+      - bearerAuth: []
+    delete:
+      summary: Delete a notification channel
+      description: Permanently deletes a notification channel.
+      operationId: deleteNotificationChannel
+      parameters:
+      - name: channelName
+        in: path
+        description: Notification channel name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      responses:
+        "204":
+          description: Notification channel deleted
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteNotificationChannel401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteNotificationChannel403ErrorResponse"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelInUseException"
+      security:
+      - bearerAuth: []
+  /v1/notification-channels/{channelName}/verify:
+    post:
+      summary: Verify an email notification channel
+      description: "Verifies a notification channel (e.g., via a code sent to an email\
+        \ address) to enable it for receiving alerts."
+      operationId: verifyNotificationChannel
+      parameters:
+      - name: channelName
+        in: path
+        description: Notification channel name.
+        required: true
+        schema:
+          $ref: "#/components/schemas/IdentifierName"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyNotificationChannelRequest"
+        required: true
+      responses:
+        "200":
+          description: Notification channel verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+        "401":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyNotificationChannel401ErrorResponse"
+        "403":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyNotificationChannel403ErrorResponse"
+        "404":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNotFoundException"
+        "400":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyNotificationChannel400ErrorResponse"
+        "409":
+          description: API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceUpdatedConcurrentlyException"
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    Resolution:
+      maximum: 3600
+      minimum: 1
+      type: integer
+      description: Resolution in seconds.
+      format: int32
+      example: 60
+    Aggregation:
+      maxLength: 128
+      minLength: 3
+      type: string
+      description: "Aggregation expression to apply to metric data. Supported forms\
+        \ are sum, max, min, avg, count, percentile(<0-100>), trimmed_mean(<lower>;<upper>),\
+        \ trimmed_mean(<lower>;), and trimmed_mean(;<upper>). Trimmed-mean bounds\
+        \ are percentages from 0 to 100, and at least one bound must be present."
+      example: percentile(95)
+    Dimension:
+      required:
+      - name
+      - value
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/IdentifierName"
+        value:
+          maxLength: 1024
+          minLength: 1
+          type: string
+          description: The value of the dimension.
+          example: server1
+    Metric:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/MetricName"
+        dimensions:
+          type: array
+          description: List of dimension names associated with this metric.
+          example:
+          - host
+          - region
+          items:
+            maxLength: 255
+            pattern: "^[A-Za-z0-9_-]+$"
+            type: string
+    PutMetricDataRequest:
+      required:
+      - entries
+      type: object
+      properties:
+        entries:
+          maxItems: 1000
+          minItems: 1
+          type: array
+          description: A list of 1 to 1000 data points to be published.
+          items:
+            $ref: "#/components/schemas/DataPoint"
+    DataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          description: "The timestamp for the data point in milliseconds since Unix\
+            \ epoch. When omitted, the server receipt time is used. Historical data\
+            \ may be submitted up to 24 hours late."
+          format: int64
+          example: 1672531200000
+        value:
+          maximum: 2147483647
+          minimum: -2147483647
+          type: number
+          description: The single numeric value of the data point.
+          example: 85.5
+        statisticSet:
+          $ref: "#/components/schemas/StatisticSet"
+        dimensions:
+          maxItems: 30
+          type: array
+          description: Dimensions that qualify the data point.
+          items:
+            $ref: "#/components/schemas/Dimension"
+        resolution:
+          $ref: "#/components/schemas/Resolution"
+    GetMetricDataResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          description: The list of retrieved data points.
+          items:
+            $ref: "#/components/schemas/DataPointResult"
+        nextToken:
+          type: string
+          description: Token used for retrieving the next page of results.
+    DataPointResult:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          description: The timestamp of the data point in milliseconds since Unix
+            epoch.
+          format: int64
+          example: 1672531200000
+        value:
+          type: number
+          description: The numeric value of the data point.
+          format: double
+          example: 85.5
+    GetDimensionValuesResponse:
+      type: object
+      properties:
+        values:
+          type: array
+          description: The list of unique values for the requested dimension.
+          example:
+          - server1
+          - server2
+          - server3
+          items:
+            type: string
+    Dashboard:
+      required:
+      - charts
+      - id
+      - name
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the dashboard.
+          example: 65f31a5bb6d71280f92f9d4c
+        name:
+          $ref: "#/components/schemas/DisplayIdentifierName"
+        charts:
+          type: array
+          description: List of chart configurations that make up the dashboard.
+          items:
+            $ref: "#/components/schemas/ChartConfig"
+        autoRefreshEnabled:
+          type: boolean
+          description: Flag to enable or disable automatic data refreshing for the
+            dashboard.
+        refreshIntervalMs:
+          maximum: 300000
+          minimum: 5000
+          type: integer
+          description: The interval in milliseconds at which the dashboard data is
+            automatically refreshed.
+        createdAt:
+          type: integer
+          description: "Timestamp when the dashboard was created, in milliseconds\
+            \ since Unix epoch."
+          format: int64
+          example: 1772352000000
+        updatedAt:
+          type: integer
+          description: "Timestamp when the dashboard was last updated, in milliseconds\
+            \ since Unix epoch."
+          format: int64
+          example: 1772352000000
+    DashboardSummary:
+      required:
+      - id
+      - name
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the dashboard.
+          example: 65f31a5bb6d71280f92f9d4c
+        name:
+          $ref: "#/components/schemas/DisplayIdentifierName"
+        chartCount:
+          type: integer
+          description: Total number of charts configured in this dashboard.
+        updatedAt:
+          type: integer
+          description: "Timestamp when the dashboard was last updated, in milliseconds\
+            \ since Unix epoch."
+          format: int64
+          example: 1772352000000
+    ChartConfig:
+      required:
+      - id
+      - timeRange
+      - title
+      - variables
+      type: object
+      properties:
+        id:
+          maxLength: 64
+          pattern: "^[A-Za-z0-9_-]+$"
+          type: string
+          description: Unique identifier for the chart within the dashboard.
+          example: chart-1
+        title:
+          maxLength: 255
+          type: string
+          description: The title displayed at the top of the chart.
+          example: CPU Usage
+        chartType:
+          $ref: "#/components/schemas/ChartType"
+        unit:
+          maxLength: 32
+          type: string
+          description: "Display unit label for the chart axis or values (e.g., 'ms',\
+            \ 'req/s', '%')."
+          example: '%'
+        row:
+          maximum: 3599
+          minimum: 0
+          type: integer
+          description: Vertical position of the chart in the dashboard grid (starts
+            from 0).
+        column:
+          maximum: 23
+          minimum: 0
+          type: integer
+          description: Horizontal position of the chart in the dashboard grid (0-23).
+        colSpan:
+          maximum: 24
+          minimum: 1
+          type: integer
+          description: Width of the chart in grid columns (1-24).
+        rowSpan:
+          maximum: 36
+          minimum: 1
+          type: integer
+          description: Height of the chart in grid rows.
+        variables:
+          maxItems: 20
+          type: array
+          description: The metric variables or expressions used as data sources for
+            this chart.
+          items:
+            $ref: "#/components/schemas/ChartVariable"
+        timeRange:
+          $ref: "#/components/schemas/TimeRangeConfig"
+    ChartVariable:
+      required:
+      - name
+      - type
+      - visible
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ExpressionVariableName"
+        displayName:
+          maxLength: 128
+          type: string
+          description: Optional human-readable label for the variable in the chart
+            legend.
+        visible:
+          type: boolean
+          description: Whether this variable's data should be visible on the chart.
+        type:
+          $ref: "#/components/schemas/ChartVariableType"
+        metricName:
+          $ref: "#/components/schemas/MetricName"
+        aggregation:
+          $ref: "#/components/schemas/Aggregation"
+        filters:
+          maxItems: 30
+          type: array
+          description: Dimension filters to apply to the metric query.
+          items:
+            $ref: "#/components/schemas/DimensionFilterConfig"
+        expression:
+          maxLength: 1024
+          minLength: 1
+          type: string
+          description: The mathematical expression to evaluate (required if type is
+            EXPRESSION).
+      oneOf:
+      - required:
+        - aggregation
+        - metricName
+        properties:
+          type:
+            type: string
+            enum:
+            - METRIC
+      - required:
+        - expression
+        properties:
+          type:
+            type: string
+            enum:
+            - EXPRESSION
+    ChartVariableType:
+      type: string
+      enum:
+      - METRIC
+      - EXPRESSION
+    DimensionFilterConfig:
+      required:
+      - dimensionName
+      - dimensionValue
+      - operator
+      type: object
+      properties:
+        dimensionName:
+          $ref: "#/components/schemas/IdentifierName"
+        dimensionValue:
+          maxLength: 1024
+          minLength: 1
+          type: string
+          description: The value to compare against.
+        operator:
+          $ref: "#/components/schemas/DimensionFilterOperator"
+    TimeRangeConfig:
+      required:
+      - preset
+      - resolution
+      type: object
+      properties:
+        preset:
+          maxLength: 20
+          pattern: "^[1-9][0-9]*[smhd]$"
+          type: string
+          description: "A positive relative duration using seconds, minutes, hours,\
+            \ or days (for example, 30m or 2d)."
+        resolution:
+          $ref: "#/components/schemas/Resolution"
+    CreateDashboardRequest:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/DisplayIdentifierName"
+        autoRefreshEnabled:
+          type: boolean
+          description: Flag to enable automatic refreshing.
+        refreshIntervalMs:
+          maximum: 300000
+          minimum: 5000
+          type: integer
+          description: Automatic refresh interval in milliseconds (5s to 5min).
+    UpdateDashboardRequest:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/DisplayIdentifierName"
+        charts:
+          maxItems: 100
+          type: array
+          description: The updated list of chart configurations for the dashboard.
+          items:
+            $ref: "#/components/schemas/ChartConfig"
+        autoRefreshEnabled:
+          type: boolean
+          description: Flag to enable automatic refreshing.
+        refreshIntervalMs:
+          maximum: 300000
+          minimum: 5000
+          type: integer
+          description: Automatic refresh interval in milliseconds (5s to 5min).
+    ListDashboardsResponse:
+      type: object
+      properties:
+        dashboards:
+          type: array
+          description: The list of dashboard summaries.
+          items:
+            $ref: "#/components/schemas/DashboardSummary"
+        nextToken:
+          type: string
+          description: Pagination token to retrieve the next set of dashboards.
+    CreateDashboardEmbedResponse:
+      required:
+      - expiresAt
+      - iframe
+      - role
+      - token
+      - tokenId
+      type: object
+      properties:
+        token:
+          type: string
+          description: The specialized access token for the embedded view.
+          example: mt_dkH0mYVwR8u7H20yM7XcQ8n8ZkVvF1m2p1vQ3cC1G_4
+        tokenId:
+          $ref: "#/components/schemas/TokenId"
+        role:
+          type: string
+          description: The restricted authorization role generated for this embed.
+          example: "Embed dashboard: 65f31a5bb6d71280f92f9d4c"
+        iframe:
+          type: string
+          description: Ready-to-use HTML iframe snippet for embedding the dashboard.
+          example: <iframe src="/embed/dashboards/65f31a5bb6d71280f92f9d4c?token=mt_..."
+            width="100%" height="600" frameborder="0"></iframe>
+        expiresAt:
+          type: integer
+          description: "Timestamp when the embed access expires, in milliseconds since\
+            \ Unix epoch."
+          format: int64
+          example: 1803888000000
+    CreateAlarmRequest:
+      required:
+      - datapointsToAlarm
+      - evaluationPeriodInMin
+      - expression
+      - resolution
+      - treatMissingDataAs
+      - variables
+      type: object
+      properties:
+        variables:
+          maxItems: 10
+          minItems: 1
+          type: array
+          description: List of metric variables that the alarm expression monitors.
+          items:
+            $ref: "#/components/schemas/AlarmVariable"
+        expression:
+          maxLength: 1024
+          minLength: 1
+          type: string
+          description: "The threshold expression (e.g., 'A > 90'). Must use variable\
+            \ names defined in 'variables'."
+          example: A > 90
+        evaluationPeriodInMin:
+          maximum: 1440
+          minimum: 1
+          type: integer
+          description: The duration in minutes over which the metric data is evaluated.
+          format: int32
+          example: 5
+        datapointsToAlarm:
+          maximum: 1440
+          minimum: 1
+          type: integer
+          description: The number of consecutive data points that must breach the
+            threshold to trigger the alarm.
+          format: int32
+          example: 3
+        resolution:
+          $ref: "#/components/schemas/Resolution"
+        treatMissingDataAs:
+          $ref: "#/components/schemas/TreatMissingDataAs"
+        notificationChannels:
+          maxItems: 10
+          type: array
+          description: List of names of notification channels to alert when the alarm
+            status changes.
+          example:
+          - Ops-Email
+          - Slack-Webhook
+          items:
+            $ref: "#/components/schemas/IdentifierName"
+    UpdateAlarmRequest:
+      required:
+      - datapointsToAlarm
+      - evaluationPeriodInMin
+      - expression
+      - resolution
+      - treatMissingDataAs
+      - variables
+      type: object
+      properties:
+        variables:
+          maxItems: 10
+          minItems: 1
+          type: array
+          description: List of metric variables that the alarm expression monitors.
+          items:
+            $ref: "#/components/schemas/AlarmVariable"
+        expression:
+          maxLength: 1024
+          minLength: 1
+          type: string
+          description: "The threshold expression (e.g., 'A > 90'). Must use variable\
+            \ names defined in 'variables'."
+          example: A > 90
+        evaluationPeriodInMin:
+          maximum: 1440
+          minimum: 1
+          type: integer
+          description: The duration in minutes over which the metric data is evaluated.
+          format: int32
+          example: 5
+        datapointsToAlarm:
+          maximum: 1440
+          minimum: 1
+          type: integer
+          description: The number of consecutive data points that must breach the
+            threshold to trigger the alarm.
+          format: int32
+          example: 3
+        resolution:
+          $ref: "#/components/schemas/Resolution"
+        treatMissingDataAs:
+          $ref: "#/components/schemas/TreatMissingDataAs"
+        notificationChannels:
+          maxItems: 10
+          type: array
+          description: List of names of notification channels to alert when the alarm
+            status changes.
+          example:
+          - Ops-Email
+          - Slack-Webhook
+          items:
+            $ref: "#/components/schemas/IdentifierName"
+    Alarm:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/IdentifierName"
+        variables:
+          type: array
+          description: List of metric variables that the alarm expression monitors.
+          items:
+            $ref: "#/components/schemas/AlarmVariable"
+        expression:
+          type: string
+          description: "The threshold expression (e.g., 'A > 90')."
+        evaluationPeriodInMin:
+          type: integer
+          description: The duration in minutes over which the metric data is evaluated.
+          format: int32
+          example: 5
+        datapointsToAlarm:
+          type: integer
+          description: The number of consecutive data points that must breach the
+            threshold to trigger the alarm.
+          format: int32
+          example: 3
+        resolution:
+          $ref: "#/components/schemas/Resolution"
+        treatMissingDataAs:
+          $ref: "#/components/schemas/TreatMissingDataAs"
+        status:
+          $ref: "#/components/schemas/AlarmStatus"
+        notificationStatus:
+          $ref: "#/components/schemas/NotificationStatus"
+        notificationChannels:
+          type: array
+          description: List of names of notification channels to alert when the alarm
+            status changes.
+          example:
+          - Ops-Email
+          - Slack-Webhook
+          items:
+            type: string
+    ListAlarmsResponse:
+      required:
+      - statusCounts
+      - totalCount
+      type: object
+      properties:
+        alarms:
+          type: array
+          description: The list of alarm summaries.
+          items:
+            $ref: "#/components/schemas/AlarmSummary"
+        nextToken:
+          type: string
+          description: Pagination token to retrieve the next set of alarms.
+        totalCount:
+          type: integer
+          description: The number of alarms matching the query and selected status.
+          format: int64
+        statusCounts:
+          $ref: "#/components/schemas/AlarmStatusCounts"
+    AlarmSummary:
+      required:
+      - notificationChannelCount
+      - notificationStatus
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/IdentifierName"
+        status:
+          $ref: "#/components/schemas/AlarmStatus"
+        notificationStatus:
+          $ref: "#/components/schemas/NotificationStatus"
+        notificationChannelCount:
+          minimum: 0
+          type: integer
+          description: The number of notification channels configured for the alarm.
+          format: int32
+        lastStatusUpdate:
+          type: integer
+          description: "Timestamp of the latest alarm status update, in milliseconds\
+            \ since Unix epoch."
+          format: int64
+          nullable: true
+    AlarmStatusCounts:
+      required:
+      - inAlarm
+      - insufficientData
+      - ok
+      type: object
+      properties:
+        ok:
+          type: integer
+          format: int64
+        inAlarm:
+          type: integer
+          format: int64
+        insufficientData:
+          type: integer
+          format: int64
+    AlarmVariable:
+      required:
+      - aggregation
+      - metricName
+      - name
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ExpressionVariableName"
+        metricName:
+          $ref: "#/components/schemas/MetricName"
+        includeDimensions:
+          maxItems: 30
+          type: array
+          description: Dimension filters to include for the metric query.
+          items:
+            $ref: "#/components/schemas/Dimension"
+        excludeDimensions:
+          maxItems: 30
+          type: array
+          description: Dimension filters to exclude for the metric query.
+          items:
+            $ref: "#/components/schemas/Dimension"
+        aggregation:
+          $ref: "#/components/schemas/Aggregation"
+    AlarmStatus:
+      type: string
+      enum:
+      - OK
+      - IN_ALARM
+      - INSUFFICIENT_DATA
+    NotificationChannel:
+      required:
+      - config
+      - name
+      - type
+      - verified
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/IdentifierName"
+        type:
+          $ref: "#/components/schemas/NotificationChannelType"
+        config:
+          $ref: "#/components/schemas/NotificationChannelConfig"
+        verified:
+          type: boolean
+          description: "Indicates whether the channel has been successfully verified\
+            \ (e.g., via email code)."
+    NotificationChannelType:
+      type: string
+      enum:
+      - WEBHOOK
+      - EMAIL
+    NotificationChannelConfig:
+      type: object
+      properties:
+        webhook:
+          $ref: "#/components/schemas/WebhookConfig"
+        email:
+          $ref: "#/components/schemas/EmailConfig"
+    WebhookConfig:
+      required:
+      - url
+      type: object
+      properties:
+        url:
+          maxLength: 2048
+          minLength: 1
+          type: string
+          description: The target URL to receive POST requests.
+          format: uri
+          example: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+        headers:
+          maxProperties: 20
+          type: object
+          additionalProperties:
+            maxLength: 1024
+            type: string
+          description: Optional HTTP headers to include in the webhook request.
+    EmailConfig:
+      required:
+      - email
+      type: object
+      properties:
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+    CreateNotificationChannelRequest:
+      required:
+      - config
+      - name
+      - type
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/IdentifierName"
+        type:
+          $ref: "#/components/schemas/NotificationChannelType"
+        config:
+          $ref: "#/components/schemas/NotificationChannelConfig"
+    UpdateNotificationChannelRequest:
+      required:
+      - config
+      type: object
+      properties:
+        config:
+          $ref: "#/components/schemas/NotificationChannelConfig"
+    VerifyNotificationChannelRequest:
+      required:
+      - code
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/VerificationCode"
+    ListNotificationChannelsResponse:
+      type: object
+      properties:
+        channels:
+          type: array
+          description: List of notification channels configured for the account.
+          items:
+            $ref: "#/components/schemas/NotificationChannel"
+        nextToken:
+          type: string
+          description: Pagination token to retrieve the next set of notification channels.
+    EntityId:
+      maxLength: 255
+      pattern: "^[A-Za-z0-9_-]+$"
+      type: string
+      description: Opaque entity identifier.
+      example: 65f31a5bb6d71280f92f9d4c
+    IdentifierName:
+      maxLength: 255
+      pattern: "^[A-Za-z0-9_-]+$"
+      type: string
+      description: "Identifier using only letters, numbers, underscores, and hyphens."
+      example: cpu_usage
+    TokenId:
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+      type: string
+      description: UUID token identifier.
+      example: 6d7e4c6b-6e5c-4b5b-9f2a-1d2c3b4a5f6e
+    ListMetricsResponse:
+      required:
+      - dimensionFacets
+      - metrics
+      - totalCount
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/Metric"
+        nextToken:
+          type: string
+          description: Token used for retrieving the next page of results.
+        totalCount:
+          type: integer
+          description: The total number of metrics matching the current filters.
+          format: int64
+        dimensionFacets:
+          type: array
+          description: Workspace-wide dimension facets; value options are populated
+            for selected dimensions.
+          items:
+            $ref: "#/components/schemas/MetricDimensionFacet"
+    MetricDimensionFacet:
+      required:
+      - count
+      - name
+      - values
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+        count:
+          type: integer
+          format: int64
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricDimensionValueFacet"
+    MetricDimensionValueFacet:
+      required:
+      - count
+      - value
+      type: object
+      properties:
+        value:
+          type: string
+        count:
+          type: integer
+          format: int64
+    MetricName:
+      maxLength: 255
+      pattern: "^[A-Za-z0-9_.-]+$"
+      type: string
+      description: "Metric name using only letters, numbers, dots, underscores, and\
+        \ hyphens."
+      example: clickhouse.table.records
+    StatisticSet:
+      required:
+      - avg
+      - max
+      - min
+      - sampleCount
+      type: object
+      properties:
+        avg:
+          maximum: 2147483647
+          minimum: -2147483647
+          type: number
+          description: The average of all values in the sample set.
+          example: 85.5
+        min:
+          maximum: 2147483647
+          minimum: -2147483647
+          type: number
+          description: The minimum value in the sample set.
+          example: 80
+        max:
+          maximum: 2147483647
+          minimum: -2147483647
+          type: number
+          description: The maximum value in the sample set.
+          example: 91
+        sampleCount:
+          maximum: 2147483647
+          minimum: 1
+          type: integer
+          description: The number of samples used for the statistics.
+          format: int64
+          example: 10
+    ChartType:
+      type: string
+      enum:
+      - LINE
+      - NUMBER
+    DimensionFilterOperator:
+      type: string
+      enum:
+      - EQUALS
+      - NOT_EQUALS
+    NotificationStatus:
+      type: string
+      enum:
+      - OK
+      - FAILED
+    ListAlarmHistoryResponse:
+      type: object
+      properties:
+        history:
+          type: array
+          description: "The list of alarm status transitions, ordered from newest\
+            \ to oldest."
+          items:
+            $ref: "#/components/schemas/AlarmHistoryEntry"
+        nextToken:
+          type: string
+          description: Pagination token to retrieve the next set of older alarm history
+            entries.
+    AlarmHistoryEntry:
+      type: object
+      properties:
+        oldStatus:
+          $ref: "#/components/schemas/AlarmStatus"
+        newStatus:
+          $ref: "#/components/schemas/AlarmStatus"
+        createdAt:
+          type: integer
+          description: "Timestamp when the transition was recorded, in milliseconds\
+            \ since Unix epoch."
+          format: int64
+          example: 1700000000000
+    TreatMissingDataAs:
+      type: string
+      enum:
+      - BREACHING
+      - NOT_BREACHING
+      - MISSING
+    EmailAddress:
+      maxLength: 320
+      minLength: 1
+      type: string
+      description: Email address.
+      format: email
+      example: test@example.com
+    VerificationCode:
+      pattern: "^[0-9]{6}$"
+      type: string
+      description: Six-digit verification code.
+      example: "123456"
+    DisplayIdentifierName:
+      maxLength: 128
+      minLength: 1
+      pattern: "^[A-Za-z0-9_-]+(?: [A-Za-z0-9_-]+)*$"
+      type: string
+      description: "Display name using words made of letters, numbers, underscores,\
+        \ and hyphens separated by single spaces."
+      example: Production Overview
+    ExpressionVariableName:
+      maxLength: 64
+      pattern: "^[A-Za-z_][A-Za-z0-9_]*$"
+      type: string
+      description: "Expression variable name. Must start with a letter or underscore\
+        \ and may contain only letters, numbers, and underscores."
+      example: var1
+    InvalidOrExpiredVerificationCodeException:
+      type: object
+      description: Invalid or expired verification code
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_OR_EXPIRED_VERIFICATION_CODE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    UnauthorizedException:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - UNAUTHORIZED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    TokenExpiredException:
+      type: object
+      description: Token expired
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - TOKEN_EXPIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    AccountNotActiveException:
+      type: object
+      description: Account is not active
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ACCOUNT_NOT_ACTIVE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    AccessDeniedException:
+      type: object
+      description: Access denied
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ACCESS_DENIED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ResourceNotFoundExceptionDetails:
+      type: object
+      additionalProperties: false
+      required:
+      - chartId
+      - variableName
+      - field
+      properties:
+        chartId:
+          type: string
+          nullable: true
+        variableName:
+          type: string
+          nullable: true
+        field:
+          type: string
+          nullable: true
+    ResourceNotFoundException:
+      type: object
+      description: Resource not found
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - RESOURCE_NOT_FOUND
+        error:
+          type: string
+        extraData:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/ResourceNotFoundExceptionDetails"
+    ResourceLimitExceededExceptionDetails:
+      type: object
+      additionalProperties: false
+      required:
+      - resource
+      - limit
+      properties:
+        resource:
+          type: string
+          nullable: true
+        limit:
+          type: integer
+          format: int32
+    ResourceLimitExceededException:
+      type: object
+      description: Resource limit exceeded
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - RESOURCE_LIMIT_EXCEEDED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/ResourceLimitExceededExceptionDetails"
+    InvalidPaginationTokenException:
+      type: object
+      description: Invalid pagination token
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_PAGINATION_TOKEN
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ListMetrics401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    ListMetrics403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    StartTimeAfterEndTimeException:
+      type: object
+      description: Start time must not be bigger than end time
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - START_TIME_AFTER_END_TIME
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    InvalidAggregationException:
+      type: object
+      description: Invalid aggregation expression
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_AGGREGATION
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    InvalidMetricQueryException:
+      type: object
+      description: Invalid metric query
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_METRIC_QUERY
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    MetricQueryTimestampTooOldException:
+      type: object
+      description: Metric query start time is outside the retention window
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - METRIC_QUERY_TIMESTAMP_TOO_OLD
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    MetricQueryTimestampInFutureException:
+      type: object
+      description: Metric query end time must not be more than one minute in the future
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - METRIC_QUERY_TIMESTAMP_IN_FUTURE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ResourceDeletionInProgressException:
+      type: object
+      description: A previous deletion of this resource is still in progress
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - RESOURCE_DELETION_IN_PROGRESS
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    GetMetricData401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    GetMetricData403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    GetMetricData400ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/InvalidPaginationTokenException"
+      - $ref: "#/components/schemas/StartTimeAfterEndTimeException"
+      - $ref: "#/components/schemas/InvalidAggregationException"
+      - $ref: "#/components/schemas/InvalidMetricQueryException"
+      - $ref: "#/components/schemas/MetricQueryTimestampTooOldException"
+      - $ref: "#/components/schemas/MetricQueryTimestampInFutureException"
+      discriminator:
+        propertyName: errorCode
+    EntryTimestampTooOldException:
+      type: object
+      description: Entry timestamp must not be older than 24 hours
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ENTRY_TIMESTAMP_TOO_OLD
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    EntryTimestampInFutureException:
+      type: object
+      description: Entry timestamp must not be in the future
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ENTRY_TIMESTAMP_IN_FUTURE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    InvalidMetricDataException:
+      type: object
+      description: '%s'
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_METRIC_DATA
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    DuplicateDimensionNameException:
+      type: object
+      description: "Duplicate dimension name: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - DUPLICATE_DIMENSION_NAME
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    EntryRequiresValueOrStatisticSetException:
+      type: object
+      description: Entry must include exactly one of value or statisticSet
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ENTRY_REQUIRES_VALUE_OR_STATISTIC_SET
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    StatisticSetIncompleteException:
+      type: object
+      description: "statisticSet must include avg, min, max, and sampleCount"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - STATISTIC_SET_INCOMPLETE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    StatisticSetInvalidRangeException:
+      type: object
+      description: statisticSet must satisfy min <= avg <= max
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - STATISTIC_SET_INVALID_RANGE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    TooManyDimensionsException:
+      type: object
+      description: Too many dimensions. Limit is %s
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - TOO_MANY_DIMENSIONS
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    TooManyDimensionCombinationsException:
+      type: object
+      description: Too many dimension combinations. Limit is %s
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - TOO_MANY_DIMENSION_COMBINATIONS
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ResourceUpdatedConcurrentlyException:
+      type: object
+      description: Resource was updated by another process
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - RESOURCE_UPDATED_CONCURRENTLY
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    PutMetricData401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    PutMetricData403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    PutMetricData400ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/EntryTimestampTooOldException"
+      - $ref: "#/components/schemas/EntryTimestampInFutureException"
+      - $ref: "#/components/schemas/InvalidMetricDataException"
+      - $ref: "#/components/schemas/DuplicateDimensionNameException"
+      - $ref: "#/components/schemas/EntryRequiresValueOrStatisticSetException"
+      - $ref: "#/components/schemas/StatisticSetIncompleteException"
+      - $ref: "#/components/schemas/StatisticSetInvalidRangeException"
+      - $ref: "#/components/schemas/TooManyDimensionsException"
+      - $ref: "#/components/schemas/TooManyDimensionCombinationsException"
+      discriminator:
+        propertyName: errorCode
+    DeleteMetric401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    DeleteMetric403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    DeleteDimension401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    DeleteDimension403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    GetDimensionValues401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    GetDimensionValues403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    ListDashboards401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    ListDashboards403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    DashboardRefreshIntervalRequiredException:
+      type: object
+      description: refreshIntervalMs is required when autoRefreshEnabled is true
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - DASHBOARD_REFRESH_INTERVAL_REQUIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    CreateDashboard401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    CreateDashboard403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    CreateDashboardEmbed401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    CreateDashboardEmbed403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    GetDashboard401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    GetDashboard403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    DuplicateChartVariableNameException:
+      type: object
+      description: "Duplicate chart variable name: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - DUPLICATE_CHART_VARIABLE_NAME
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    DuplicateChartIdException:
+      type: object
+      description: "Duplicate chart id: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - DUPLICATE_CHART_ID
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ChartRowInvalidException:
+      type: object
+      description: Chart must fit within dashboard rows 0 through 3599
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CHART_ROW_INVALID
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ChartColumnInvalidException:
+      type: object
+      description: Chart column must be between 0 and 23
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CHART_COLUMN_INVALID
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ChartColSpanInvalidException:
+      type: object
+      description: Chart colSpan must be between 1 and 24
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CHART_COL_SPAN_INVALID
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ChartRowSpanInvalidException:
+      type: object
+      description: Chart rowSpan must be between 1 and 36
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CHART_ROW_SPAN_INVALID
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ChartExceedsDashboardWidthException:
+      type: object
+      description: Chart exceeds dashboard width
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CHART_EXCEEDS_DASHBOARD_WIDTH
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ChartsOverlapException:
+      type: object
+      description: "Charts overlap: %s and %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CHARTS_OVERLAP
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    InvalidDashboardFilterExceptionDetails:
+      type: object
+      additionalProperties: false
+      required:
+      - chartId
+      - variableName
+      - filterIndex
+      - field
+      properties:
+        chartId:
+          type: string
+          nullable: true
+        variableName:
+          type: string
+          nullable: true
+        filterIndex:
+          type: integer
+          format: int32
+        field:
+          type: string
+          nullable: true
+    InvalidDashboardFilterException:
+      type: object
+      description: "Invalid dimension filter at index %s for variable: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_DASHBOARD_FILTER
+        error:
+          type: string
+        extraData:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/InvalidDashboardFilterExceptionDetails"
+    DuplicateDashboardFilterExceptionDetails:
+      type: object
+      additionalProperties: false
+      required:
+      - chartId
+      - variableName
+      - filterIndex
+      - field
+      properties:
+        chartId:
+          type: string
+          nullable: true
+        variableName:
+          type: string
+          nullable: true
+        filterIndex:
+          type: integer
+          format: int32
+        field:
+          type: string
+          nullable: true
+    DuplicateDashboardFilterException:
+      type: object
+      description: "Duplicate dimension filter for variable: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - DUPLICATE_DASHBOARD_FILTER
+        error:
+          type: string
+        extraData:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/DuplicateDashboardFilterExceptionDetails"
+    ContradictoryDashboardFilterExceptionDetails:
+      type: object
+      additionalProperties: false
+      required:
+      - chartId
+      - variableName
+      - filterIndex
+      - field
+      properties:
+        chartId:
+          type: string
+          nullable: true
+        variableName:
+          type: string
+          nullable: true
+        filterIndex:
+          type: integer
+          format: int32
+        field:
+          type: string
+          nullable: true
+    ContradictoryDashboardFilterException:
+      type: object
+      description: "Contradictory dimension filters for variable: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CONTRADICTORY_DASHBOARD_FILTER
+        error:
+          type: string
+        extraData:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/ContradictoryDashboardFilterExceptionDetails"
+    InvalidDashboardTimeRangeException:
+      type: object
+      description: "Invalid time range for chart: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_DASHBOARD_TIME_RANGE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ChartVariableTypeRequiredException:
+      type: object
+      description: "Chart variable type is required for: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CHART_VARIABLE_TYPE_REQUIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ChartVariableVisibleRequiredException:
+      type: object
+      description: "Chart variable visible is required for: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CHART_VARIABLE_VISIBLE_REQUIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    MetricVariableMetricNameRequiredException:
+      type: object
+      description: "Metric variable metricName is required for: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - METRIC_VARIABLE_METRIC_NAME_REQUIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    UnsupportedChartVariableTypeException:
+      type: object
+      description: "Unsupported chart variable type: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - UNSUPPORTED_CHART_VARIABLE_TYPE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    ExpressionVariableExpressionRequiredException:
+      type: object
+      description: "Expression variable expression is required for: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - EXPRESSION_VARIABLE_EXPRESSION_REQUIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    InvalidExpressionException:
+      type: object
+      description: Invalid expression
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_EXPRESSION
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    InvalidNumericExpressionException:
+      type: object
+      description: Invalid numeric expression
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_NUMERIC_EXPRESSION
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    MismatchedExpressionParenthesesException:
+      type: object
+      description: Mismatched parentheses in expression
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - MISMATCHED_EXPRESSION_PARENTHESES
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    MissingExpressionOperandException:
+      type: object
+      description: Missing operand for operator %s
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - MISSING_EXPRESSION_OPERAND
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    MissingExpressionOperandsException:
+      type: object
+      description: Missing operands for operator %s
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - MISSING_EXPRESSION_OPERANDS
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    InvalidExpressionTokenException:
+      type: object
+      description: "Invalid token in expression: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_EXPRESSION_TOKEN
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    CyclicDashboardVariableDependencyException:
+      type: object
+      description: "Cyclic dashboard variable dependency detected at: %s"
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - CYCLIC_DASHBOARD_VARIABLE_DEPENDENCY
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    DashboardRefreshIntervalTooFastException:
+      type: object
+      description: refreshIntervalMs must be at least the finest chart resolution
+        of %s seconds
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - DASHBOARD_REFRESH_INTERVAL_TOO_FAST
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    UpdateDashboard401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    UpdateDashboard403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    UpdateDashboard400ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/DuplicateChartVariableNameException"
+      - $ref: "#/components/schemas/DuplicateChartIdException"
+      - $ref: "#/components/schemas/ChartRowInvalidException"
+      - $ref: "#/components/schemas/ChartColumnInvalidException"
+      - $ref: "#/components/schemas/ChartColSpanInvalidException"
+      - $ref: "#/components/schemas/ChartRowSpanInvalidException"
+      - $ref: "#/components/schemas/ChartExceedsDashboardWidthException"
+      - $ref: "#/components/schemas/ChartsOverlapException"
+      - $ref: "#/components/schemas/InvalidDashboardFilterException"
+      - $ref: "#/components/schemas/DuplicateDashboardFilterException"
+      - $ref: "#/components/schemas/ContradictoryDashboardFilterException"
+      - $ref: "#/components/schemas/InvalidDashboardTimeRangeException"
+      - $ref: "#/components/schemas/ChartVariableTypeRequiredException"
+      - $ref: "#/components/schemas/ChartVariableVisibleRequiredException"
+      - $ref: "#/components/schemas/MetricVariableMetricNameRequiredException"
+      - $ref: "#/components/schemas/UnsupportedChartVariableTypeException"
+      - $ref: "#/components/schemas/ExpressionVariableExpressionRequiredException"
+      - $ref: "#/components/schemas/InvalidExpressionException"
+      - $ref: "#/components/schemas/InvalidNumericExpressionException"
+      - $ref: "#/components/schemas/MismatchedExpressionParenthesesException"
+      - $ref: "#/components/schemas/MissingExpressionOperandException"
+      - $ref: "#/components/schemas/MissingExpressionOperandsException"
+      - $ref: "#/components/schemas/InvalidExpressionTokenException"
+      - $ref: "#/components/schemas/CyclicDashboardVariableDependencyException"
+      - $ref: "#/components/schemas/DashboardRefreshIntervalRequiredException"
+      - $ref: "#/components/schemas/DashboardRefreshIntervalTooFastException"
+      discriminator:
+        propertyName: errorCode
+    DeleteDashboard401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    DeleteDashboard403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    ListAlarms401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    ListAlarms403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    ListAlarmHistory401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    ListAlarmHistory403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    GetAlarm401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    GetAlarm403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    ExpressionTooComplexException:
+      type: object
+      description: Expression is too complex
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - EXPRESSION_TOO_COMPLEX
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    InvalidAlarmRequestException:
+      type: object
+      description: Invalid alarm request
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - INVALID_ALARM_REQUEST
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    DuplicateAlarmVariableNameException:
+      type: object
+      description: Alarm variable names must be unique
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - DUPLICATE_ALARM_VARIABLE_NAME
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    AlarmEvaluationPeriodNotMultipleOfResolutionException:
+      type: object
+      description: Alarm evaluation period must be a whole multiple of the resolution
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ALARM_EVALUATION_PERIOD_NOT_MULTIPLE_OF_RESOLUTION
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    AlarmDatapointsExceedEvaluationBucketsException:
+      type: object
+      description: Datapoints to alarm cannot exceed the number of evaluation buckets
+        in the evaluation period
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ALARM_DATAPOINTS_EXCEED_EVALUATION_BUCKETS
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    AlarmEvaluationWindowTooLargeException:
+      type: object
+      description: Alarm evaluation window contains too many buckets for the selected
+        resolution
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ALARM_EVALUATION_WINDOW_TOO_LARGE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    UnverifiedNotificationChannelException:
+      type: object
+      description: Notification channel must be verified before it can be attached
+        to an alarm
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - UNVERIFIED_NOTIFICATION_CHANNEL
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    UpdateAlarm401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    UpdateAlarm403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    UpdateAlarm400ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/InvalidExpressionException"
+      - $ref: "#/components/schemas/ExpressionTooComplexException"
+      - $ref: "#/components/schemas/MismatchedExpressionParenthesesException"
+      - $ref: "#/components/schemas/MissingExpressionOperandException"
+      - $ref: "#/components/schemas/MissingExpressionOperandsException"
+      - $ref: "#/components/schemas/InvalidExpressionTokenException"
+      - $ref: "#/components/schemas/InvalidAlarmRequestException"
+      - $ref: "#/components/schemas/DuplicateAlarmVariableNameException"
+      - $ref: "#/components/schemas/AlarmEvaluationPeriodNotMultipleOfResolutionException"
+      - $ref: "#/components/schemas/AlarmDatapointsExceedEvaluationBucketsException"
+      - $ref: "#/components/schemas/AlarmEvaluationWindowTooLargeException"
+      - $ref: "#/components/schemas/UnverifiedNotificationChannelException"
+      discriminator:
+        propertyName: errorCode
+    CreateAlarm401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    CreateAlarm403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    CreateAlarm400ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/InvalidExpressionException"
+      - $ref: "#/components/schemas/ExpressionTooComplexException"
+      - $ref: "#/components/schemas/MismatchedExpressionParenthesesException"
+      - $ref: "#/components/schemas/MissingExpressionOperandException"
+      - $ref: "#/components/schemas/MissingExpressionOperandsException"
+      - $ref: "#/components/schemas/InvalidExpressionTokenException"
+      - $ref: "#/components/schemas/InvalidAlarmRequestException"
+      - $ref: "#/components/schemas/DuplicateAlarmVariableNameException"
+      - $ref: "#/components/schemas/AlarmEvaluationPeriodNotMultipleOfResolutionException"
+      - $ref: "#/components/schemas/AlarmDatapointsExceedEvaluationBucketsException"
+      - $ref: "#/components/schemas/AlarmEvaluationWindowTooLargeException"
+      - $ref: "#/components/schemas/UnverifiedNotificationChannelException"
+      discriminator:
+        propertyName: errorCode
+    DeleteAlarm401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    DeleteAlarm403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    ListNotificationChannels401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    ListNotificationChannels403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    NotificationChannelConfigRequiredException:
+      type: object
+      description: Notification channel config is required
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - NOTIFICATION_CHANNEL_CONFIG_REQUIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    WebhookNotificationChannelConfigRequiredException:
+      type: object
+      description: Webhook notification channel config is required
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - WEBHOOK_NOTIFICATION_CHANNEL_CONFIG_REQUIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    WebhookNotificationChannelCannotIncludeEmailConfigException:
+      type: object
+      description: Webhook notification channels cannot include email config
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - WEBHOOK_NOTIFICATION_CHANNEL_CANNOT_INCLUDE_EMAIL_CONFIG
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    EmailNotificationChannelConfigRequiredException:
+      type: object
+      description: Email notification channel config is required
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - EMAIL_NOTIFICATION_CHANNEL_CONFIG_REQUIRED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    EmailNotificationChannelCannotIncludeWebhookConfigException:
+      type: object
+      description: Email notification channels cannot include webhook config
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - EMAIL_NOTIFICATION_CHANNEL_CANNOT_INCLUDE_WEBHOOK_CONFIG
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    CreateNotificationChannel401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    CreateNotificationChannel403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    CreateNotificationChannel400ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/NotificationChannelConfigRequiredException"
+      - $ref: "#/components/schemas/WebhookNotificationChannelConfigRequiredException"
+      - $ref: "#/components/schemas/WebhookNotificationChannelCannotIncludeEmailConfigException"
+      - $ref: "#/components/schemas/EmailNotificationChannelConfigRequiredException"
+      - $ref: "#/components/schemas/EmailNotificationChannelCannotIncludeWebhookConfigException"
+      discriminator:
+        propertyName: errorCode
+    GetNotificationChannel401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    GetNotificationChannel403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    UpdateNotificationChannel401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    UpdateNotificationChannel403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    UpdateNotificationChannel400ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/NotificationChannelConfigRequiredException"
+      - $ref: "#/components/schemas/WebhookNotificationChannelConfigRequiredException"
+      - $ref: "#/components/schemas/WebhookNotificationChannelCannotIncludeEmailConfigException"
+      - $ref: "#/components/schemas/EmailNotificationChannelConfigRequiredException"
+      - $ref: "#/components/schemas/EmailNotificationChannelCannotIncludeWebhookConfigException"
+      discriminator:
+        propertyName: errorCode
+    NotificationChannelInUseException:
+      type: object
+      description: Notification channel is still referenced by one or more alarms
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - NOTIFICATION_CHANNEL_IN_USE
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    DeleteNotificationChannel401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    DeleteNotificationChannel403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    OnlyEmailNotificationChannelsCanBeVerifiedException:
+      type: object
+      description: Only email notification channels can be verified
+      additionalProperties: false
+      required:
+      - errorCode
+      - error
+      properties:
+        errorCode:
+          type: string
+          enum:
+          - ONLY_EMAIL_NOTIFICATION_CHANNELS_CAN_BE_VERIFIED
+        error:
+          type: string
+        extraData:
+          nullable: true
+          type: object
+    VerifyNotificationChannel401ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/UnauthorizedException"
+      - $ref: "#/components/schemas/TokenExpiredException"
+      discriminator:
+        propertyName: errorCode
+    VerifyNotificationChannel403ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/AccountNotActiveException"
+      - $ref: "#/components/schemas/AccessDeniedException"
+      discriminator:
+        propertyName: errorCode
+    VerifyNotificationChannel400ErrorResponse:
+      oneOf:
+      - $ref: "#/components/schemas/OnlyEmailNotificationChannelsCanBeVerifiedException"
+      - $ref: "#/components/schemas/InvalidOrExpiredVerificationCodeException"
+      discriminator:
+        propertyName: errorCode
+  securitySchemes:
+    bearerAuth:
+      type: apiKey
+      description: Use 'Bearer <token>' with either a login JWT or an API access token.
+      name: Authorization
+      in: header
