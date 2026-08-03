@@ -1,0 +1,49 @@
+{{>partial_header}}
+
+package {{packageName}}
+
+import (
+{{#hasServiceErrorDetails}}
+	"encoding/json"
+{{/hasServiceErrorDetails}}
+
+	"github.com/omascloud/sdks/go/core"
+)
+
+{{#serviceErrors}}
+// {{type}} represents the {{errorCode}} API error.
+type {{type}} struct {
+	*core.APIError
+{{#hasDetails}}
+	Details *{{detailsType}}
+{{/hasDetails}}
+}
+
+// Unwrap exposes the shared API error fields.
+func (e *{{type}}) Unwrap() error {
+	return e.APIError
+}
+
+{{/serviceErrors}}
+func decodeAPIError(apiError *core.APIError) error {
+	switch apiError.ErrorCode {
+{{#serviceErrors}}
+	case "{{errorCode}}":
+{{#hasDetails}}
+		typedError := &{{type}}{APIError: apiError}
+		if len(apiError.ExtraData) != 0 {
+			var details {{detailsType}}
+			if err := json.Unmarshal(apiError.ExtraData, &details); err == nil {
+				typedError.Details = &details
+			}
+		}
+		return typedError
+{{/hasDetails}}
+{{^hasDetails}}
+		return &{{type}}{APIError: apiError}
+{{/hasDetails}}
+{{/serviceErrors}}
+	default:
+		return apiError
+	}
+}

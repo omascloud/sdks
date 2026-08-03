@@ -1,0 +1,180 @@
+{{>partial_header}}
+
+package {{packageName}}
+{{#models}}
+{{#model}}
+{{#isEnum}}
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+// {{classname}} defines the allowed values for {{classname}}.
+type {{classname}} {{dataType}}
+
+const (
+{{#allowableValues}}
+{{#enumVars}}
+	{{#enumClassPrefix}}{{classname.toUpperCase}}_{{/enumClassPrefix}}{{name}} {{classname}} = {{{value}}}
+{{/enumVars}}
+{{/allowableValues}}
+)
+
+// IsValid reports whether v is a value defined by the API contract.
+func (v {{classname}}) IsValid() bool {
+	switch v {
+{{#allowableValues}}
+{{#enumVars}}
+	case {{#enumClassPrefix}}{{classname.toUpperCase}}_{{/enumClassPrefix}}{{name}}:
+		return true
+{{/enumVars}}
+{{/allowableValues}}
+	default:
+		return false
+	}
+}
+
+// UnmarshalJSON rejects values not defined by the API contract.
+func (v *{{classname}}) UnmarshalJSON(data []byte) error {
+	var value {{dataType}}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	decoded := {{classname}}(value)
+	if !decoded.IsValid() {
+		return fmt.Errorf("invalid {{classname}} value: %v", value)
+	}
+	*v = decoded
+	return nil
+}
+{{/isEnum}}
+{{^isEnum}}
+{{#vendorExtensions.x-sdk-operation-request}}
+{{#vendorExtensions.x-sdk-has-validation-rules}}
+
+import (
+	"fmt"
+{{#vendorExtensions.x-sdk-has-unique-items}}
+	"reflect"
+{{/vendorExtensions.x-sdk-has-unique-items}}
+{{#vendorExtensions.x-sdk-has-pattern}}
+	"regexp"
+{{/vendorExtensions.x-sdk-has-pattern}}
+{{#vendorExtensions.x-sdk-has-required-string}}
+	"strings"
+{{/vendorExtensions.x-sdk-has-required-string}}
+)
+{{/vendorExtensions.x-sdk-has-validation-rules}}
+{{/vendorExtensions.x-sdk-operation-request}}
+
+// {{classname}} {{#description}}{{{description}}}{{/description}}{{^description}}contains API model data.{{/description}}
+type {{classname}} struct {
+{{#vars}}
+{{#description}}
+	// {{{description}}}
+{{/description}}
+	{{name}} {{#isNullable}}*{{{vendorExtensions.x-go-base-type}}}{{/isNullable}}{{^isNullable}}{{^required}}{{^isArray}}{{^isFreeFormObject}}*{{/isFreeFormObject}}{{/isArray}}{{/required}}{{{dataType}}}{{/isNullable}} `json:"{{#vendorExtensions.x-sdk-json-ignore}}-{{/vendorExtensions.x-sdk-json-ignore}}{{^vendorExtensions.x-sdk-json-ignore}}{{baseName}}{{^required}},omitempty{{/required}}{{/vendorExtensions.x-sdk-json-ignore}}"`
+{{/vars}}
+}
+{{#vendorExtensions.x-sdk-operation-request}}
+
+// Validate checks request values against the OpenAPI constraints.
+func (v {{classname}}) Validate() error {
+{{#vars}}
+{{#required}}
+{{#isString}}
+	if {{#isNullable}}v.{{name}} != nil && {{/isNullable}}strings.TrimSpace(string({{#isNullable}}*{{/isNullable}}v.{{name}})) == "" {
+		return fmt.Errorf("{{baseName}}: must not be blank")
+	}
+{{/isString}}
+{{#isArray}}
+{{^isNullable}}
+	if v.{{name}} == nil {
+		return fmt.Errorf("{{baseName}}: is required")
+	}
+{{/isNullable}}
+{{/isArray}}
+{{#isMap}}
+{{^isNullable}}
+	if v.{{name}} == nil {
+		return fmt.Errorf("{{baseName}}: is required")
+	}
+{{/isNullable}}
+{{/isMap}}
+{{/required}}
+{{#minLength}}
+	if {{#isNullable}}v.{{name}} != nil && {{/isNullable}}{{^isNullable}}{{^required}}v.{{name}} != nil && {{/required}}{{/isNullable}}len({{#isNullable}}*{{/isNullable}}{{^isNullable}}{{^required}}*{{/required}}{{/isNullable}}v.{{name}}) < {{minLength}} {
+		return fmt.Errorf("{{baseName}}: length must be at least {{minLength}}")
+	}
+{{/minLength}}
+{{#maxLength}}
+	if {{#isNullable}}v.{{name}} != nil && {{/isNullable}}{{^isNullable}}{{^required}}v.{{name}} != nil && {{/required}}{{/isNullable}}len({{#isNullable}}*{{/isNullable}}{{^isNullable}}{{^required}}*{{/required}}{{/isNullable}}v.{{name}}) > {{maxLength}} {
+		return fmt.Errorf("{{baseName}}: length must be at most {{maxLength}}")
+	}
+{{/maxLength}}
+{{#pattern}}
+{{#isNullable}}
+	if v.{{name}} != nil {
+		if matched, err := regexp.MatchString("{{{vendorExtensions.x-sdk-pattern}}}", string(*v.{{name}})); err != nil || !matched {
+			return fmt.Errorf("{{baseName}}: has an invalid format")
+		}
+	}
+{{/isNullable}}
+{{^isNullable}}
+{{#required}}
+	if matched, err := regexp.MatchString("{{{vendorExtensions.x-sdk-pattern}}}", string(v.{{name}})); err != nil || !matched {
+		return fmt.Errorf("{{baseName}}: has an invalid format")
+	}
+{{/required}}
+{{^required}}
+	if v.{{name}} != nil {
+		if matched, err := regexp.MatchString("{{{vendorExtensions.x-sdk-pattern}}}", string(*v.{{name}})); err != nil || !matched {
+			return fmt.Errorf("{{baseName}}: has an invalid format")
+		}
+	}
+{{/required}}
+{{/isNullable}}
+{{/pattern}}
+{{#minimum}}
+	if {{#isNullable}}v.{{name}} != nil && {{/isNullable}}{{^isNullable}}{{^required}}v.{{name}} != nil && {{/required}}{{/isNullable}}{{#isNullable}}*{{/isNullable}}{{^isNullable}}{{^required}}*{{/required}}{{/isNullable}}v.{{name}} < {{{minimum}}} {
+		return fmt.Errorf("{{baseName}}: must be at least {{{minimum}}}")
+	}
+{{/minimum}}
+{{#maximum}}
+	if {{#isNullable}}v.{{name}} != nil && {{/isNullable}}{{^isNullable}}{{^required}}v.{{name}} != nil && {{/required}}{{/isNullable}}{{#isNullable}}*{{/isNullable}}{{^isNullable}}{{^required}}*{{/required}}{{/isNullable}}v.{{name}} > {{{maximum}}} {
+		return fmt.Errorf("{{baseName}}: must be at most {{{maximum}}}")
+	}
+{{/maximum}}
+{{#minItems}}
+	if {{#isNullable}}v.{{name}} != nil && {{/isNullable}}{{^isNullable}}{{^required}}v.{{name}} != nil && {{/required}}{{/isNullable}}len({{#isNullable}}*{{/isNullable}}v.{{name}}) < {{minItems}} {
+		return fmt.Errorf("{{baseName}}: must contain at least {{minItems}} items")
+	}
+{{/minItems}}
+{{#maxItems}}
+	if {{#isNullable}}v.{{name}} != nil && {{/isNullable}}{{^isNullable}}{{^required}}v.{{name}} != nil && {{/required}}{{/isNullable}}len({{#isNullable}}*{{/isNullable}}v.{{name}}) > {{maxItems}} {
+		return fmt.Errorf("{{baseName}}: must contain at most {{maxItems}} items")
+	}
+{{/maxItems}}
+{{#uniqueItems}}
+{{#isNullable}}
+	if v.{{name}} != nil {
+{{/isNullable}}
+	for left := range {{#isNullable}}*{{/isNullable}}v.{{name}} {
+		for right := left + 1; right < len({{#isNullable}}*{{/isNullable}}v.{{name}}); right++ {
+			if reflect.DeepEqual(({{#isNullable}}*{{/isNullable}}v.{{name}})[left], ({{#isNullable}}*{{/isNullable}}v.{{name}})[right]) {
+				return fmt.Errorf("{{baseName}}: items must be unique")
+			}
+		}
+	}
+{{#isNullable}}
+	}
+{{/isNullable}}
+{{/uniqueItems}}
+{{/vars}}
+	return nil
+}
+{{/vendorExtensions.x-sdk-operation-request}}
+{{/isEnum}}
+{{/model}}
+{{/models}}
