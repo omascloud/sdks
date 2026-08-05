@@ -1,0 +1,77 @@
+{{>partial_header}}
+
+package {{packageName}}
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/url"
+
+	"github.com/omascloud/sdks/go/core"
+)
+
+const endpoint = "{{serverUrl}}"
+
+// Client calls the {{serviceName}} API.
+type Client struct {
+	client *core.Client
+}
+
+// NewClient constructs a {{serviceName}} API client.
+func NewClient(authProvider core.AuthProvider, options ...core.ClientOption) (*Client, error) {
+	options = append(options, core.WithAPIErrorDecoder(decodeAPIError))
+	client, err := core.NewClient("{{serviceName}}", endpoint, authProvider, options...)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{client: client}, nil
+}
+
+// Close releases resources owned by the client.
+func (c *Client) Close() error {
+	return c.client.Close()
+}
+
+{{#operations}}
+{{#operation}}
+// {{operationIdCamelCase}} {{#summary}}{{{summary}}}{{/summary}}{{^summary}}calls the {{operationId}} operation.{{/summary}}
+func (c *Client) {{operationIdCamelCase}}(
+	ctx context.Context,
+	request {{vendorExtensions.x-sdk-request-class}},
+) {{#returnType}}(*{{{returnType}}}, error){{/returnType}}{{^returnType}}error{{/returnType}} {
+	if err := request.Validate(); err != nil {
+{{#returnType}}
+		return nil, fmt.Errorf("validate {{vendorExtensions.x-sdk-operation-id}} request: %w", err)
+{{/returnType}}
+{{^returnType}}
+		return fmt.Errorf("validate {{vendorExtensions.x-sdk-operation-id}} request: %w", err)
+{{/returnType}}
+	}
+	path := "{{{path}}}"
+{{#pathParams}}
+	path = core.ReplacePathParameter(path, "{{baseName}}", request.{{vendorExtensions.x-sdk-field-name}})
+{{/pathParams}}
+	query := url.Values{}
+{{#queryParams}}
+	core.AddQueryParameter(query, "{{baseName}}", request.{{vendorExtensions.x-sdk-field-name}})
+{{/queryParams}}
+	headers := http.Header{}
+{{#headerParams}}
+	core.AddHeader(headers, "{{baseName}}", request.{{vendorExtensions.x-sdk-field-name}})
+{{/headerParams}}
+{{#returnType}}
+	result := new({{{returnType}}})
+	err := c.client.Do(ctx, "{{vendorExtensions.x-sdk-operation-id}}", http.Method{{httpMethod}}, path, query, headers, {{#bodyParam}}request{{/bodyParam}}{{^bodyParam}}nil{{/bodyParam}}, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+{{/returnType}}
+{{^returnType}}
+	return c.client.Do(ctx, "{{vendorExtensions.x-sdk-operation-id}}", http.Method{{httpMethod}}, path, query, headers, {{#bodyParam}}request{{/bodyParam}}{{^bodyParam}}nil{{/bodyParam}}, nil)
+{{/returnType}}
+}
+
+{{/operation}}
+{{/operations}}
