@@ -17,7 +17,7 @@ public class OmasSdkGeneratorApplicationTest {
     public void testRegistersLanguageAndAllSubcommands() {
         CommandLine commandLine = new CommandLine(new OmasSdkGeneratorApplication());
 
-        assertEquals(commandLine.getSubcommands().keySet(), Set.of("java", "go", "all"));
+        assertEquals(commandLine.getSubcommands().keySet(), Set.of("java", "go", "typescript", "all"));
         for (String name : commandLine.getSubcommands().keySet()) {
             CommandLine.Model.OptionSpec service = commandLine.getSubcommands().get(name)
                     .getCommandSpec()
@@ -37,6 +37,7 @@ public class OmasSdkGeneratorApplicationTest {
         assertEquals(commandLine.execute("--help"), CommandLine.ExitCode.OK);
         assertTrue(output.toString().contains("java"), output.toString());
         assertTrue(output.toString().contains("go"), output.toString());
+        assertTrue(output.toString().contains("typescript"), output.toString());
         assertTrue(output.toString().contains("all"), output.toString());
 
         output.getBuffer().setLength(0);
@@ -50,7 +51,7 @@ public class OmasSdkGeneratorApplicationTest {
         CommandLine commandLine = new CommandLine(new OmasSdkGeneratorApplication());
         commandLine.setErr(new PrintWriter(error));
 
-        assertEquals(commandLine.execute("typescript"), CommandLine.ExitCode.USAGE);
+        assertEquals(commandLine.execute("ruby"), CommandLine.ExitCode.USAGE);
         assertTrue(error.toString().contains("Unmatched argument"), error.toString());
     }
 }

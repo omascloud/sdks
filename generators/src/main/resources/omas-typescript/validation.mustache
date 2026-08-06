@@ -1,0 +1,80 @@
+{{>partial_header}}
+
+import { SdkError } from "@omascloud/sdk-core";
+{{#operationRequests}}
+import type { {{className}} } from "./models/{{className}}.js";
+{{/operationRequests}}
+
+function fail(operationId: string, field: string, message: string): never {
+	throw new SdkError(`validate ${operationId} request: ${field}: ${message}`);
+}
+
+function stableKey(value: unknown): string {
+	if (Array.isArray(value)) {
+		return `[${value.map(stableKey).join(",")}]`;
+	}
+	if (typeof value === "object" && value !== null) {
+		return `{${Object.entries(value)
+			.sort(([left], [right]) => left.localeCompare(right))
+			.map(([key, item]) => `${JSON.stringify(key)}:${stableKey(item)}`)
+			.join(",")}}`;
+	}
+	return JSON.stringify(value) ?? "undefined";
+}
+{{#operationRequests}}
+
+export function validate{{operationName}}Request(request: {{className}}): void {
+{{#fields}}
+{{#required}}
+	if (request.{{name}} === undefined || request.{{name}} === null) {
+		fail("{{operationId}}", "{{baseName}}", "is required");
+	}
+{{/required}}
+{{#requiredString}}
+	if (request.{{name}}.trim().length === 0) {
+		fail("{{operationId}}", "{{baseName}}", "must not be blank");
+	}
+{{/requiredString}}
+{{#minLength}}
+	if ({{{guard}}}request.{{name}}.length < {{minLength}}) {
+		fail("{{operationId}}", "{{baseName}}", "length must be at least {{minLength}}");
+	}
+{{/minLength}}
+{{#maxLength}}
+	if ({{{guard}}}request.{{name}}.length > {{maxLength}}) {
+		fail("{{operationId}}", "{{baseName}}", "length must be at most {{maxLength}}");
+	}
+{{/maxLength}}
+{{#pattern}}
+	if ({{{guard}}}!/{{{pattern}}}/.test(request.{{name}})) {
+		fail("{{operationId}}", "{{baseName}}", "has an invalid format");
+	}
+{{/pattern}}
+{{#minimum}}
+	if ({{{guard}}}request.{{name}} < {{{minimum}}}) {
+		fail("{{operationId}}", "{{baseName}}", "must be at least {{{minimum}}}");
+	}
+{{/minimum}}
+{{#maximum}}
+	if ({{{guard}}}request.{{name}} > {{{maximum}}}) {
+		fail("{{operationId}}", "{{baseName}}", "must be at most {{{maximum}}}");
+	}
+{{/maximum}}
+{{#minItems}}
+	if ({{{guard}}}request.{{name}}.length < {{minItems}}) {
+		fail("{{operationId}}", "{{baseName}}", "must contain at least {{minItems}} items");
+	}
+{{/minItems}}
+{{#maxItems}}
+	if ({{{guard}}}request.{{name}}.length > {{maxItems}}) {
+		fail("{{operationId}}", "{{baseName}}", "must contain at most {{maxItems}} items");
+	}
+{{/maxItems}}
+{{#uniqueItems}}
+	if ({{{guard}}}new Set(request.{{name}}.map(stableKey)).size !== request.{{name}}.length) {
+		fail("{{operationId}}", "{{baseName}}", "items must be unique");
+	}
+{{/uniqueItems}}
+{{/fields}}
+}
+{{/operationRequests}}

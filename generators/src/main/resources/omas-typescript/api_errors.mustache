@@ -1,0 +1,36 @@
+{{>partial_header}}
+
+import { ApiError } from "@omascloud/sdk-core";
+{{#serviceErrors}}
+{{#hasDetails}}
+import type { {{detailsType}} } from "./models/{{detailsType}}.js";
+{{/hasDetails}}
+{{/serviceErrors}}
+{{#serviceErrors}}
+
+export class {{type}} extends ApiError<{{#hasDetails}}{{detailsType}}{{/hasDetails}}{{^hasDetails}}unknown{{/hasDetails}}> {
+	constructor(error: ApiError<unknown>) {
+		super({
+			status: error.status,
+			errorCode: error.errorCode,
+			message: error.serverMessage,
+			requestId: error.requestId,
+			retryAfterMs: error.retryAfterMs,
+			headers: error.headers,
+			details: error.details as {{#hasDetails}}{{detailsType}}{{/hasDetails}}{{^hasDetails}}unknown{{/hasDetails}},
+		});
+		this.name = "{{type}}";
+	}
+}
+{{/serviceErrors}}
+
+export function decode{{serviceClass}}ApiError(error: ApiError<unknown>): ApiError<unknown> {
+	switch (error.errorCode) {
+{{#serviceErrors}}
+		case "{{errorCode}}":
+			return new {{type}}(error);
+{{/serviceErrors}}
+		default:
+			return error;
+	}
+}
