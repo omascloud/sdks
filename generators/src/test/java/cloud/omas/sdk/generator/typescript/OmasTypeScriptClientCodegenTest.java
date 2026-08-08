@@ -220,7 +220,7 @@ public class OmasTypeScriptClientCodegenTest {
 
             assertEquals(
                     Files.readString(source),
-                    "export interface Example {\n\tvalue: string;\n}\n");
+                    "export interface Example {\n    value: string;\n}\n");
             assertEquals(Files.readString(second), "export type Second = string;\n");
         } finally {
             deleteTree(output);
