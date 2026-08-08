@@ -1,0 +1,42 @@
+{{>partial_header}}
+
+{{#models}}
+{{#model}}
+{{#vendorExtensions.x-sdk-imports}}
+import type { {{.}} } from "./{{.}}.js";
+{{/vendorExtensions.x-sdk-imports}}
+{{#isEnum}}
+export type {{classname}} =
+{{#allowableValues}}
+{{#enumVars}}
+	| {{{value}}}{{#-last}};{{/-last}}
+{{/enumVars}}
+{{/allowableValues}}
+{{/isEnum}}
+{{^isEnum}}
+{{#isAlias}}
+export type {{classname}} = {{{dataType}}};
+{{/isAlias}}
+{{^isAlias}}
+export interface {{classname}} {
+{{#vars}}
+	readonly {{name}}{{^required}}?{{/required}}: {{{datatypeWithEnum}}}{{#isNullable}} | null{{/isNullable}};
+{{/vars}}
+}
+{{#vars}}
+{{#isEnum}}
+{{^isContainer}}
+
+export type {{classname}}{{enumName}} =
+{{#allowableValues}}
+{{#enumVars}}
+	| {{{value}}}{{#-last}};{{/-last}}
+{{/enumVars}}
+{{/allowableValues}}
+{{/isContainer}}
+{{/isEnum}}
+{{/vars}}
+{{/isAlias}}
+{{/isEnum}}
+{{/model}}
+{{/models}}

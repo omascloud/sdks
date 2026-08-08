@@ -1,0 +1,35 @@
+{
+    "name": "@omascloud/sdk-core",
+    "version": "0.1.0",
+    "description": "Shared runtime for Omas Cloud TypeScript SDKs",
+    "license": "MIT",
+    "type": "module",
+    "engines": {
+        "node": ">=22"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./node": {
+            "types": "./dist/node.d.ts",
+            "import": "./dist/node.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test:node": "vitest run --exclude src/browser.test.ts",
+        "test:browser": "vitest run --config vitest.browser.config.ts"
+    },
+    "devDependencies": {
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    }
+}

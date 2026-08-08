@@ -1,0 +1,99 @@
+{{>partial_header}}
+
+import { ClientRuntime } from "@omascloud/sdk-core";
+import type { CallOptions, ClientOptions } from "@omascloud/sdk-core";
+import { decode{{serviceClass}}ApiError } from "./api-errors.js";
+{{#clientModelImports}}
+import type { {{.}} } from "./models/{{.}}.js";
+{{/clientModelImports}}
+import {
+{{#clientOperations}}
+	validate{{operationName}}Request,
+{{/clientOperations}}
+} from "./validation.js";
+
+export class {{clientClass}} {
+	readonly #runtime: ClientRuntime;
+
+	constructor(options: ClientOptions) {
+		this.#runtime = new ClientRuntime(
+			"{{serviceName}}",
+			"{{serverUrl}}",
+			options,
+			decode{{serviceClass}}ApiError,
+		);
+	}
+{{#clientOperations}}
+
+	async {{operationId}}(
+		request: {{requestType}},
+		options?: CallOptions,
+	): Promise<{{returnType}}> {
+		validate{{operationName}}Request(request);
+		return this.#runtime.request<{{returnType}}>(
+			{
+				operationId: "{{operationId}}",
+				method: "{{httpMethod}}",
+				path: {{{pathExpression}}},
+				query: build{{operationName}}Query(request),
+				headers: build{{operationName}}Headers(request),
+{{#hasBody}}
+				body: build{{operationName}}Body(request),
+{{/hasBody}}
+			},
+			options,
+		);
+	}
+{{/clientOperations}}
+}
+{{#clientOperations}}
+
+function build{{operationName}}Query(
+	request: {{requestType}},
+): ReadonlyArray<readonly [string, string]> {
+	const query: Array<readonly [string, string]> = [];
+{{#queryFields}}
+{{^required}}
+	if (request.{{name}} !== undefined) {
+{{/required}}
+{{#array}}
+		for (const value of request.{{name}}) {
+			query.push(["{{baseName}}", String(value)]);
+		}
+{{/array}}
+{{^array}}
+		query.push(["{{baseName}}", String(request.{{name}})]);
+{{/array}}
+{{^required}}
+	}
+{{/required}}
+{{/queryFields}}
+	return query;
+}
+
+function build{{operationName}}Headers(request: {{requestType}}): Headers {
+	const headers = new Headers();
+{{#headerFields}}
+{{^required}}
+	if (request.{{name}} !== undefined) {
+{{/required}}
+		headers.set("{{baseName}}", String(request.{{name}}));
+{{^required}}
+	}
+{{/required}}
+{{/headerFields}}
+	return headers;
+}
+{{#hasBody}}
+
+function build{{operationName}}Body(request: {{requestType}}): Record<string, unknown> {
+	const body: Record<string, unknown> = {};
+{{#bodyFields}}
+	if (request.{{name}} !== undefined) {
+		body["{{baseName}}"] = request.{{name}};
+	}
+{{/bodyFields}}
+	return body;
+}
+{{/hasBody}}
+{{/clientOperations}}

@@ -1,0 +1,34 @@
+{
+    "name": "@omascloud/sdk-metrics",
+    "version": "0.1.0",
+    "description": "Omas Cloud Metrics TypeScript SDK",
+    "license": "MIT",
+    "type": "module",
+    "engines": {
+        "node": ">=22"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test:node": "vitest run --exclude src/browser.test.ts",
+        "test:browser": "vitest run --config vitest.browser.config.ts"
+    },
+    "dependencies": {
+        "@omascloud/sdk-core": "workspace:^"
+    },
+    "devDependencies": {
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    }
+}

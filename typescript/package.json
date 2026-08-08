@@ -1,0 +1,22 @@
+{
+    "name": "@omascloud/sdks",
+    "private": true,
+    "type": "module",
+    "packageManager": "pnpm@11.15.1",
+    "scripts": {
+        "build": "pnpm --recursive run build",
+        "check": "biome check . && pnpm --recursive run typecheck",
+        "test": "pnpm test:node && pnpm test:browser",
+        "test:node": "node --test *.test.mjs && pnpm --recursive run test:node",
+        "test:browser": "pnpm --recursive --if-present run test:browser",
+        "format": "biome format --write ."
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.4.13",
+        "@vitest/browser-playwright": "4.1.5",
+        "esbuild": "0.25.12",
+        "playwright": "1.59.1",
+        "typescript": "6.0.3",
+        "vitest": "4.1.5"
+    }
+}

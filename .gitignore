@@ -1,1 +1,6 @@
 **/target/
+/typescript/**/node_modules/
+/typescript/**/dist/
+/typescript/**/coverage/
+/typescript/**/playwright-report/
+/typescript/**/test-results/

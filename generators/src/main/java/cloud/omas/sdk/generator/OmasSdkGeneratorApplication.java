@@ -2,6 +2,7 @@ package cloud.omas.sdk.generator;
 
 import cloud.omas.sdk.generator.go.OmasGoGeneratorApplication;
 import cloud.omas.sdk.generator.java.OmasJavaGeneratorApplication;
+import cloud.omas.sdk.generator.typescript.OmasTypeScriptGeneratorApplication;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
@@ -14,6 +15,7 @@ import picocli.CommandLine.Spec;
         subcommands = {
                 OmasJavaGeneratorApplication.class,
                 OmasGoGeneratorApplication.class,
+                OmasTypeScriptGeneratorApplication.class,
                 AllGeneratorCommand.class
         })
 public final class OmasSdkGeneratorApplication implements Runnable {

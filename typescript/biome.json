@@ -1,0 +1,35 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+    "files": {
+        "includes": [
+            "**",
+            "!**/node_modules",
+            "!**/target",
+            "!**/dist",
+            "!**/.idea"
+        ]
+    },
+    "overrides": [
+        {
+            "includes": ["metrics/src/generated/**"],
+            "linter": { "enabled": false },
+            "assist": { "enabled": false }
+        }
+    ],
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "double"
+        }
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true
+        }
+    }
+}

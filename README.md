@@ -1,6 +1,6 @@
 # Omas Cloud SDKs
 
-Official Java and Go SDKs for the Omas Cloud API. Both provide automatic M2M token exchange, request validation, and typed API errors. Java includes synchronous and asynchronous clients; Go uses context-aware synchronous methods that compose naturally with goroutines.
+Official Java, Go, and TypeScript SDKs for the Omas Cloud API. They provide M2M token exchange, request validation, and typed API errors. Java includes synchronous and asynchronous clients; Go uses context-aware synchronous methods; TypeScript uses promise-based Fetch clients in Node.js and browsers.
 
 ## Java SDK
 
@@ -105,6 +105,51 @@ if errors.As(err, &notFound) {
 
 Unknown server error codes remain available as `*core.APIError`, so clients remain forward-compatible.
 
+## TypeScript SDK
+
+The TypeScript workspace requires Node.js 22 or newer and pnpm 11. Install dependencies and build both public packages from the repository root:
+
+```shell
+pnpm --dir typescript install
+pnpm --dir typescript build
+```
+
+The packages are ESM-only. The default Core entry and Metrics package are browser-safe:
+
+```ts
+import { BearerAuthProvider } from "@omascloud/sdk-core";
+import { MetricsClient, ResourceNotFoundError } from "@omascloud/sdk-metrics";
+
+const metrics = new MetricsClient({
+	authProvider: new BearerAuthProvider(token),
+});
+
+const controller = new AbortController();
+
+try {
+	const response = await metrics.getMetricData({
+		metricName: "cpu.load",
+		startTimestamp: Date.now() - 3_600_000,
+		maxResults: 100,
+	}, { signal: controller.signal });
+	console.log(response.datapoints);
+} catch (error) {
+	if (error instanceof ResourceNotFoundError) {
+		console.error(error.requestId, error.details);
+	}
+}
+```
+
+Operation requests are flat. The generated client places path and query values and JSON body fields according to the public contract. Known service errors have distinct generated classes; unknown codes remain `ApiError` for forward compatibility.
+
+M2M token exchange is available only through the explicit Node entry so it cannot leak into browser bundles:
+
+```ts
+import { M2mAuthProvider } from "@omascloud/sdk-core/node";
+
+const authProvider = new M2mAuthProvider(credential);
+```
+
 ## Repository layout
 
 - `schema/` contains the public OpenAPI contracts.
@@ -113,8 +158,10 @@ Unknown server error codes remain available as `*core.APIError`, so clients rema
 - `java/metrics/` contains the generated Java metrics client and models.
 - `go/core/` contains the handwritten Go runtime and authentication code.
 - `go/metrics/` contains the generated Go metrics client and models.
+- `typescript/core/` contains the browser-safe TypeScript runtime and the explicit Node M2M entry.
+- `typescript/metrics/` contains the generated public TypeScript Metrics client and models.
 
-Generated sources are committed to the repository. Files under `java/metrics/src/generated/` and generated `.go` files under `go/metrics/` should not be edited manually.
+Generated sources are committed to the repository. Files under `java/metrics/src/generated/`, generated `.go` files under `go/metrics/`, and files under `typescript/metrics/src/generated/` should not be edited manually.
 
 ## Generating the SDK
 
@@ -129,6 +176,7 @@ The shaded jar exposes Picocli subcommands for each language or all languages:
 ```shell
 java -jar generators/target/omas-sdk-generator-1.0.0-app.jar java
 java -jar generators/target/omas-sdk-generator-1.0.0-app.jar go
+java -jar generators/target/omas-sdk-generator-1.0.0-app.jar typescript
 java -jar generators/target/omas-sdk-generator-1.0.0-app.jar all
 ```
 
@@ -138,7 +186,7 @@ Each subcommand generates the metrics service by default. Use `--service` repeat
 java -jar generators/target/omas-sdk-generator-1.0.0-app.jar all --service metrics
 ```
 
-The generator uses the repository conventions directly. It reads `schema/<service>.yaml`, writes Java sources beneath `java/<service>`, and writes formatted Go sources beneath `go/<service>` while preserving handwritten Go tests.
+The generator uses the repository conventions directly. It reads `schema/<service>.yaml`, writes Java sources beneath `java/<service>`, formatted Go sources beneath `go/<service>`, and formatted TypeScript sources beneath `typescript/<service>/src/generated/` while preserving handwritten code and tests.
 
 ## Building and testing
 
@@ -154,6 +202,14 @@ Run the Go tests and static analysis from the repository root:
 cd go
 go test -race ./...
 go vet ./...
+```
+
+Run all TypeScript formatting, type, build, Node, browser, bundle-safety, and package-content gates from the repository root:
+
+```shell
+pnpm --dir typescript check
+pnpm --dir typescript build
+pnpm --dir typescript test
 ```
 
 ## License

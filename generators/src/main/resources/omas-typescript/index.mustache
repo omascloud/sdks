@@ -1,0 +1,8 @@
+{{>partial_header}}
+
+export * from "./api-errors.js";
+export * from "./{{serviceName}}-client.js";
+export * from "./metadata.js";
+{{#modelExports}}
+export type * from "./models/{{.}}.js";
+{{/modelExports}}

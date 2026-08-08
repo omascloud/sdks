@@ -2,6 +2,7 @@ package cloud.omas.sdk.generator;
 
 import cloud.omas.sdk.generator.go.OmasGoGeneratorApplication;
 import cloud.omas.sdk.generator.java.OmasJavaGeneratorApplication;
+import cloud.omas.sdk.generator.typescript.OmasTypeScriptGeneratorApplication;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -26,6 +27,7 @@ public final class AllGeneratorCommand implements Callable<Integer> {
     public Integer call() {
         OmasJavaGeneratorApplication.generateServices(services);
         OmasGoGeneratorApplication.generateServices(services);
+        OmasTypeScriptGeneratorApplication.generateServices(services);
         return 0;
     }
 }
