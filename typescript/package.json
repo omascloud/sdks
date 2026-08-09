@@ -13,10 +13,10 @@
     },
     "devDependencies": {
         "@biomejs/biome": "2.4.13",
-        "@vitest/browser-playwright": "4.1.5",
+        "@vitest/browser-playwright": "4.1.10",
         "esbuild": "0.25.12",
         "playwright": "1.59.1",
         "typescript": "6.0.3",
-        "vitest": "4.1.5"
+        "vitest": "4.1.10"
     }
 }
