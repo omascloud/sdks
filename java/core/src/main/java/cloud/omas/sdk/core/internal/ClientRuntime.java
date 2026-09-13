@@ -23,8 +23,11 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class ClientRuntime implements AutoCloseable {
 
@@ -98,32 +101,76 @@ public final class ClientRuntime implements AutoCloseable {
             });
         });
 
+        CompletableFuture<SdkHttpResponse> result = new CompletableFuture<>();
+        AtomicReference<CompletableFuture<SdkHttpResponse>> inFlight = new AtomicReference<>();
+        CompletableFuture<Void> deadline = new CompletableFuture<>();
+        result.whenComplete((response, failure) -> {
+            deadline.complete(null);
+            CompletableFuture<SdkHttpResponse> exchange = inFlight.get();
+            if (failure != null && exchange != null) {
+                exchange.cancel(true);
+            }
+        });
+        deadline.orTimeout(
+                options.requestTimeout().toNanos() - (System.nanoTime() - started), TimeUnit.NANOSECONDS)
+                .exceptionallyAsync(failure -> {
+                    result.completeExceptionally(new RequestTimeoutException(
+                            "Request timed out for " + operationId, failure));
+                    return null;
+                });
+
         CompletionStage<Authentication> authentication;
         try {
+            remainingTimeout(operationId, started);
             authentication = Objects.requireNonNull(
                     authProvider.resolve(new AuthContext(service, operationId)),
                     "authProvider returned null");
         } catch (RuntimeException exception) {
-            return CompletableFuture.failedFuture(
-                    new AuthenticationException("Authentication failed for " + operationId, exception));
+            result.completeExceptionally(exception instanceof RequestTimeoutException ? exception
+                    : new AuthenticationException("Authentication failed for " + operationId, exception));
+            return result;
         }
-        return authentication.handle((resolved, failure) -> {
+        authentication.handle((resolved, failure) -> {
+            if (result.isDone()) {
+                throw new CancellationException();
+            }
             if (failure != null) {
                 throw new AuthenticationException("Authentication failed for " + operationId, unwrap(failure));
             }
             Objects.requireNonNull(resolved, "authProvider returned null").headers().forEach(authorizedRequest::header);
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - started);
-            Duration remaining = options.requestTimeout().minus(elapsed);
-            if (remaining.isZero() || remaining.isNegative()) {
-                throw new RequestTimeoutException("Request timed out during authentication for " + operationId);
+            return authorizedRequest.timeout(remainingTimeout(operationId, started)).build();
+        }).thenCompose(authorized -> {
+            if (result.isDone()) {
+                return CompletableFuture.<SdkHttpResponse>failedFuture(new CancellationException());
             }
-            return authorizedRequest.timeout(remaining).build();
-        }).thenCompose(transport::execute).thenApply(response -> {
+            CompletableFuture<SdkHttpResponse> exchange = transport.execute(authorized);
+            inFlight.set(exchange);
+            if (result.isDone()) {
+                exchange.cancel(true);
+            }
+            return exchange;
+        }).thenApply(response -> {
+            remainingTimeout(operationId, started);
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw apiExceptionFactory.create(response);
             }
             return response;
-        }).toCompletableFuture();
+        }).whenComplete((response, failure) -> {
+            if (failure == null) {
+                result.complete(response);
+            } else {
+                result.completeExceptionally(unwrap(failure));
+            }
+        });
+        return result;
+    }
+
+    private Duration remainingTimeout(String operationId, long started) {
+        Duration remaining = options.requestTimeout().minus(Duration.ofNanos(System.nanoTime() - started));
+        if (remaining.isZero() || remaining.isNegative()) {
+            throw new RequestTimeoutException("Request timed out for " + operationId);
+        }
+        return remaining;
     }
 
     private Throwable unwrap(Throwable failure) {
