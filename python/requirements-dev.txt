@@ -1,0 +1,7 @@
+-e ./core
+-e ./metrics
+build>=1.2,<2
+mypy>=1.15,<2
+pytest>=8,<10
+pytest-asyncio>=0.24,<2
+ruff>=0.11,<1

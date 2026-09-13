@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "omas-cloud-metrics"
+version = "0.1.0"
+description = "Omas Cloud Metrics Python SDK."
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "omas-cloud-core>=0.1.0,<0.2.0",
+    "pydantic>=2.10,<3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/omascloud"]

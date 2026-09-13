@@ -2,6 +2,7 @@ package cloud.omas.sdk.generator;
 
 import cloud.omas.sdk.generator.go.OmasGoGeneratorApplication;
 import cloud.omas.sdk.generator.java.OmasJavaGeneratorApplication;
+import cloud.omas.sdk.generator.python.OmasPythonGeneratorApplication;
 import cloud.omas.sdk.generator.typescript.OmasTypeScriptGeneratorApplication;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -16,6 +17,7 @@ import picocli.CommandLine.Spec;
                 OmasJavaGeneratorApplication.class,
                 OmasGoGeneratorApplication.class,
                 OmasTypeScriptGeneratorApplication.class,
+                OmasPythonGeneratorApplication.class,
                 AllGeneratorCommand.class
         })
 public final class OmasSdkGeneratorApplication implements Runnable {

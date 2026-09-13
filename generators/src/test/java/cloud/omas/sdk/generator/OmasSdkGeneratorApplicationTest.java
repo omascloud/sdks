@@ -17,7 +17,7 @@ public class OmasSdkGeneratorApplicationTest {
     public void testRegistersLanguageAndAllSubcommands() {
         CommandLine commandLine = new CommandLine(new OmasSdkGeneratorApplication());
 
-        assertEquals(commandLine.getSubcommands().keySet(), Set.of("java", "go", "typescript", "all"));
+        assertEquals(commandLine.getSubcommands().keySet(), Set.of("java", "go", "typescript", "python", "all"));
         for (String name : commandLine.getSubcommands().keySet()) {
             CommandLine.Model.OptionSpec service = commandLine.getSubcommands().get(name)
                     .getCommandSpec()
@@ -38,6 +38,7 @@ public class OmasSdkGeneratorApplicationTest {
         assertTrue(output.toString().contains("java"), output.toString());
         assertTrue(output.toString().contains("go"), output.toString());
         assertTrue(output.toString().contains("typescript"), output.toString());
+        assertTrue(output.toString().contains("python"), output.toString());
         assertTrue(output.toString().contains("all"), output.toString());
 
         output.getBuffer().setLength(0);
