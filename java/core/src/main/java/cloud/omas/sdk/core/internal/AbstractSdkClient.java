@@ -14,6 +14,7 @@ import cloud.omas.sdk.core.http.SdkHttpRequest;
 import cloud.omas.sdk.core.http.SdkHttpResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -62,6 +63,7 @@ public abstract class AbstractSdkClient implements AutoCloseable {
                 : ClientRuntime.create(service, requiredAuthProvider, effectiveOptions, transport, apiExceptionFactory);
         objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 

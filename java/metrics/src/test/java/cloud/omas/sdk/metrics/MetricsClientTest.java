@@ -35,9 +35,10 @@ public class MetricsClientTest {
     public void testListsMetricsThroughConfiguredRuntime() {
         String responseBody = """
                 {
-                  "metrics": [{"name": "cpu.usage", "dimensions": ["host"]}],
+                  "metrics": [{"name": "cpu.usage", "dimensions": ["host"], "futureMetricField": true}],
                   "totalCount": 1,
-                  "dimensionFacets": []
+                  "dimensionFacets": [],
+                  "futureResponseField": {"enabled": true}
                 }
                 """;
         RecordingTransport transport = new RecordingTransport(new SdkHttpResponse(
@@ -62,7 +63,14 @@ public class MetricsClientTest {
 
     @Test
     public void testListsMetricsAsynchronously() {
-        String responseBody = "{\"metrics\":[],\"totalCount\":0,\"dimensionFacets\":[]}";
+        String responseBody = """
+                {
+                  "metrics": [{"name": "cpu.usage", "dimensions": [], "futureMetricField": true}],
+                  "totalCount": 1,
+                  "dimensionFacets": [],
+                  "futureResponseField": {"enabled": true}
+                }
+                """;
         RecordingTransport transport = new RecordingTransport(new SdkHttpResponse(
                 200, Map.of(), responseBody.getBytes(StandardCharsets.UTF_8)));
         MetricsAsyncClient client = MetricsAsyncClient.builder()
@@ -75,7 +83,8 @@ public class MetricsClientTest {
                         .build())
                 .join();
 
-        assertEquals(response.totalCount(), Long.valueOf(0));
+        assertEquals(response.totalCount(), Long.valueOf(1));
+        assertEquals(response.metrics().get(0).name(), "cpu.usage");
         assertEquals(transport.request.uri().toString(),
                 "https://api.omas.cloud/v1/metrics?maxResults=10");
     }
