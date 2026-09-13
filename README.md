@@ -174,19 +174,19 @@ mvn -f generators/pom.xml clean test package
 The shaded jar exposes Picocli subcommands for each language or all languages:
 
 ```shell
-java -jar generators/target/omas-sdk-generator-1.0.0-app.jar java
-java -jar generators/target/omas-sdk-generator-1.0.0-app.jar go
-java -jar generators/target/omas-sdk-generator-1.0.0-app.jar typescript
-java -jar generators/target/omas-sdk-generator-1.0.0-app.jar all
+java -jar generators/target/omas-sdk-generator-1.1.0-app.jar java
+java -jar generators/target/omas-sdk-generator-1.1.0-app.jar go
+java -jar generators/target/omas-sdk-generator-1.1.0-app.jar typescript
+java -jar generators/target/omas-sdk-generator-1.1.0-app.jar all
 ```
 
 Each subcommand generates the metrics service by default. Use `--service` repeatedly or with comma-separated names when generating selected services:
 
 ```shell
-java -jar generators/target/omas-sdk-generator-1.0.0-app.jar all --service metrics
+java -jar generators/target/omas-sdk-generator-1.1.0-app.jar all --service metrics
 ```
 
-The generator uses the repository conventions directly. It reads `schema/<service>.yaml`, writes Java sources beneath `java/<service>`, formatted Go sources beneath `go/<service>`, and formatted TypeScript sources beneath `typescript/<service>/src/generated/` while preserving handwritten code and tests.
+The generator uses the repository conventions directly. It reads a local `schema/<service>.yaml` when present, otherwise the schema bundled inside the JAR, and writes Java sources beneath `java/<service>`, formatted Go sources beneath `go/<service>`, and formatted TypeScript sources beneath `typescript/<service>/src/generated/` while preserving handwritten code and tests.
 
 ## Building and testing
 

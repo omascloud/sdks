@@ -1,0 +1,134 @@
+name: Publish generator to GitHub Packages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-generator
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'omascloud/sdks' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: generators/pom.xml
+          server-id: github
+
+      - name: Read Maven coordinates
+        id: coordinates
+        shell: python
+        run: |
+          import os
+          import re
+          import xml.etree.ElementTree as ET
+
+          pom = ET.parse('generators/pom.xml').getroot()
+          ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
+          coordinates = {}
+          for key in ('groupId', 'artifactId', 'version'):
+              value = pom.findtext('m:' + key, namespaces=ns)
+              if not value or not re.fullmatch(r'[A-Za-z0-9_.-]+', value):
+                  raise SystemExit('Expected a literal Maven ' + key)
+              coordinates[key] = value
+          if coordinates['version'].endswith('-SNAPSHOT'):
+              raise SystemExit('Publishing requires a release version, not a SNAPSHOT')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              for key, value in coordinates.items():
+                  print(f'{key}={value}', file=output)
+
+      - name: Check whether the version is published
+        id: registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GROUP_ID: ${{ steps.coordinates.outputs.groupId }}
+          ARTIFACT_ID: ${{ steps.coordinates.outputs.artifactId }}
+          VERSION: ${{ steps.coordinates.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://maven.pkg.github.com/omascloud/sdks/${GROUP_ID//.//}/${ARTIFACT_ID}/${VERSION}/${ARTIFACT_ID}-${VERSION}"
+          found=0
+          for suffix in .pom .jar -app.jar; do
+            status=$(curl --location --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --connect-timeout 15 --max-time 60 \
+              --user "${GITHUB_ACTOR}:${GITHUB_TOKEN}" "${base}${suffix}")
+            case "$status" in
+              200) found=$((found + 1)) ;;
+              404) ;;
+              *) echo "Registry check failed: HTTP ${status}" >&2; exit 1 ;;
+            esac
+          done
+          case "$found" in
+            0) echo 'exists=false' >> "$GITHUB_OUTPUT" ;;
+            3)
+              echo 'exists=true' >> "$GITHUB_OUTPUT"
+              echo "Version ${VERSION} is already published; skipping." >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *) echo "Version ${VERSION} is partially published; inspect it before retrying." >&2; exit 1 ;;
+          esac
+
+      - name: Set up Node.js for generator tests
+        if: steps.registry.outputs.exists == 'false'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Set up pnpm
+        if: steps.registry.outputs.exists == 'false'
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: typescript/package.json
+          run_install: false
+
+      - name: Install TypeScript tooling
+        if: steps.registry.outputs.exists == 'false'
+        run: pnpm --dir typescript install --frozen-lockfile
+
+      - name: Test and package
+        if: steps.registry.outputs.exists == 'false'
+        run: mvn --batch-mode --no-transfer-progress -f generators/pom.xml clean verify
+
+      - name: Verify packaged schemas and executable
+        if: steps.registry.outputs.exists == 'false'
+        env:
+          ARTIFACT_ID: ${{ steps.coordinates.outputs.artifactId }}
+          VERSION: ${{ steps.coordinates.outputs.version }}
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import subprocess
+          import tempfile
+          import zipfile
+
+          base = Path('generators/target') / (os.environ['ARTIFACT_ID'] + '-' + os.environ['VERSION'])
+          for suffix in ('.jar', '-app.jar'):
+              with zipfile.ZipFile(str(base) + suffix) as jar:
+                  for schema in Path('schema').rglob('*'):
+                      if schema.is_file():
+                          assert jar.read(schema.as_posix()) == schema.read_bytes(), schema
+          with tempfile.TemporaryDirectory() as directory:
+              subprocess.run(['java', '-jar', str(base.resolve()) + '-app.jar', 'java'],
+                             cwd=directory, check=True, timeout=60)
+              assert (Path(directory) / 'java/metrics/src/generated/java/cloud/omas/sdk/metrics/MetricsClient.java').is_file()
+
+      - name: Publish Maven artifacts
+        if: steps.registry.outputs.exists == 'false'
+        run: mvn --batch-mode --no-transfer-progress -f generators/pom.xml -DskipTests deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

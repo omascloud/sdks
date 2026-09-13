@@ -5,13 +5,46 @@ import picocli.CommandLine;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 public class OmasSdkGeneratorApplicationTest {
+
+    @Test
+    public void testGeneratesJavaWithoutRepositorySchema() throws Exception {
+        Path directory = Files.createTempDirectory("omas-generator-test-");
+        try {
+            Path log = directory.resolve("generator.log");
+            Process process = new ProcessBuilder(
+                    Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+                    "-cp", System.getProperty("surefire.test.class.path"),
+                    OmasSdkGeneratorApplication.class.getName(), "java")
+                    .directory(directory.toFile())
+                    .redirectErrorStream(true)
+                    .redirectOutput(log.toFile())
+                    .start();
+            if (!process.waitFor(60, TimeUnit.SECONDS)) {
+                process.destroyForcibly().waitFor();
+                throw new AssertionError("Generator timed out");
+            }
+            assertEquals(process.exitValue(), 0, Files.readString(log));
+            assertTrue(Files.isRegularFile(directory.resolve(
+                    "java/metrics/src/generated/java/cloud/omas/sdk/metrics/MetricsClient.java")));
+        } finally {
+            try (var paths = Files.walk(directory)) {
+                for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                    Files.delete(path);
+                }
+            }
+        }
+    }
 
     @Test
     public void testRegistersLanguageAndAllSubcommands() {

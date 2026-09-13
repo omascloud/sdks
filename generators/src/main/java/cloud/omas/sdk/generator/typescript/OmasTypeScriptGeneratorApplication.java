@@ -7,6 +7,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -94,9 +95,15 @@ public final class OmasTypeScriptGeneratorApplication implements Callable<Intege
     }
 
     static String contractDigest(Path schema) throws IOException {
-        try {
+        try (InputStream input = Files.exists(schema)
+                ? Files.newInputStream(schema)
+                : OmasTypeScriptGeneratorApplication.class.getClassLoader()
+                        .getResourceAsStream(schema.toString().replace('\\', '/'))) {
+            if (input == null) {
+                throw new IOException("Cannot find public contract " + schema);
+            }
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(Files.readAllBytes(schema)));
+            return HexFormat.of().formatHex(digest.digest(input.readAllBytes()));
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 is not available", exception);
         }
